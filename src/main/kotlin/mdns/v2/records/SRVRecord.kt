@@ -11,7 +11,12 @@ import java.nio.ByteBuffer
  */
 
 
-class SRVRecord(override val label: String, private val priority: Int, private val weight: Int, private val port: Int, private val host: String) : CompleteRecord {
+class SRVRecord(override val label: String) : CompleteRecord {
+
+    var priority: Int = 0
+    var weight: Int = 0
+    var port: Int = 0
+    lateinit var host: String
 
     override val timeToLive: Int = 120
     override val hasProperty = false

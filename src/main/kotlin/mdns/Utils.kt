@@ -1,5 +1,6 @@
 package mdns
 
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.math.pow
 
@@ -17,6 +18,26 @@ fun BitSet.minimumBytes(n: Int): ByteArray {
         .reversedArray()
 }
 
+fun ByteBuffer.readEncodedLabel(): String {
+    val characters = mutableListOf<Byte>()
+    val dotAsByte = '.'.toByte()
+    var returnTo = 0
+    do {
+        val nextByte = get()
+        when {
+            nextByte.isCharacter -> characters.add(nextByte)
+            nextByte.isLength -> if (characters.isNotEmpty()) characters.add(dotAsByte)
+            nextByte.isPointer -> {
+                val jumpPosition = get().toInt() and 255
+                if (returnTo == 0) returnTo = position()
+                position(jumpPosition)
+            }
+        }
+    } while (nextByte.toInt() != 0)
+    if (returnTo > 0) position(returnTo)
+    return String(characters.toByteArray())
+}
+
 
 val Byte.isPointer get() = (asString == "11000000")
 val Byte.isCharacter get() = this in 30..255
@@ -26,3 +47,4 @@ val ByteArray.asString
     get() = take(512).map { it.asString.padStart(8, '0') }.chunked(4).joinToString("\n\t") { it.joinToString(" ") }
 
 val Byte.asString get() = Integer.toBinaryString(toInt() and 255)
+

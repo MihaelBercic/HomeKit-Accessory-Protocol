@@ -30,7 +30,7 @@ fun main() {
         val domain = PTRRecord("_sex._tcp.local", "fyuck")
         val info = TXTRecord("_hap._tcp.local", mutableMapOf("Fuck" to 5))
         val srv = SRVRecord("_hap._tcp.local", 0, 10, 3000, "HAP-Bridge")
-        questionRecords.add(question)
+        queryRecords.add(question)
         answerRecords.add(domain)
         additionalRecords.add(info)
         additionalRecords.add(srv)

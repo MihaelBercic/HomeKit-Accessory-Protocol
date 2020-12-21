@@ -11,7 +11,9 @@ import java.nio.ByteBuffer
  */
 
 
-class PTRRecord(override val label: String, var domain: String = "") : CompleteRecord {
+class PTRRecord(override val label: String) : CompleteRecord {
+
+    lateinit var domain: String
 
     override val timeToLive: Int = 10
     override val hasProperty = false
@@ -29,5 +31,6 @@ class PTRRecord(override val label: String, var domain: String = "") : CompleteR
     }
 
     override fun readData(buffer: ByteBuffer) {
+
     }
 }
