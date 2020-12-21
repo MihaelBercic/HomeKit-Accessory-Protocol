@@ -1,4 +1,4 @@
-package mdns.v2.records.structure
+package mdns.records.structure
 
 /**
  * Created by Mihael Valentin Berčič
@@ -8,11 +8,7 @@ package mdns.v2.records.structure
 
 enum class ResourceClass(val id: Int) {
     IN(1),
-    NO(-1);
-
-    companion object {
-        fun withId(id: Int) = values().firstOrNull { it.id == id } ?: NO
-    }
+    NO(-1)
 }
 
 

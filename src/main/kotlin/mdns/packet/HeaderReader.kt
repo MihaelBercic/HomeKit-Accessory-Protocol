@@ -1,7 +1,7 @@
-package mdns.v2.packet
+package mdns.packet
 
 import mdns.bits
-import mdns.v2.Header
+import mdns.Header
 import java.nio.ByteBuffer
 
 /**

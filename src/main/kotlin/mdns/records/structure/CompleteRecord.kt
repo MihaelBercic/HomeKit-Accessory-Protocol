@@ -1,4 +1,4 @@
-package mdns.v2.records.structure
+package mdns.records.structure
 
 import java.nio.ByteBuffer
 

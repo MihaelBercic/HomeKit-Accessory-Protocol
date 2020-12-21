@@ -1,7 +1,7 @@
-package mdns.v2.records
+package mdns.records
 
-import mdns.v2.records.structure.CompleteRecord
-import mdns.v2.records.structure.RecordType
+import mdns.records.structure.CompleteRecord
+import mdns.records.structure.RecordType
 import java.nio.ByteBuffer
 
 /**

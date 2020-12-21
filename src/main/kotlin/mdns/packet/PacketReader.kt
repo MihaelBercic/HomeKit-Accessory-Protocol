@@ -1,13 +1,13 @@
-package mdns.v2.packet
+package mdns.packet
 
 import mdns.readEncodedLabel
-import mdns.v2.Packet
-import mdns.v2.records.PTRRecord
-import mdns.v2.records.QueryRecord
-import mdns.v2.records.SRVRecord
-import mdns.v2.records.TXTRecord
-import mdns.v2.records.structure.CompleteRecord
-import mdns.v2.records.structure.RecordType
+import mdns.Packet
+import mdns.records.PTRRecord
+import mdns.records.QueryRecord
+import mdns.records.SRVRecord
+import mdns.records.TXTRecord
+import mdns.records.structure.CompleteRecord
+import mdns.records.structure.RecordType
 import java.net.DatagramPacket
 import java.nio.ByteBuffer
 

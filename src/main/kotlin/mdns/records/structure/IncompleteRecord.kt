@@ -1,4 +1,4 @@
-package mdns.v2.records.structure
+package mdns.records.structure
 
 import mdns.minimumBytes
 import java.nio.ByteBuffer
@@ -32,5 +32,4 @@ interface IncompleteRecord {
             put(classCode.minimumBytes(2))
         }
     }
-
 }

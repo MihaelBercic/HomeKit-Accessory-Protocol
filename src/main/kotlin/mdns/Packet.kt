@@ -1,9 +1,9 @@
-package mdns.v2
+package mdns
 
-import mdns.v2.packet.DatagramPacketBuilder
-import mdns.v2.packet.PacketReader
-import mdns.v2.records.structure.CompleteRecord
-import mdns.v2.records.structure.IncompleteRecord
+import mdns.packet.DatagramPacketBuilder
+import mdns.packet.PacketReader
+import mdns.records.structure.CompleteRecord
+import mdns.records.structure.IncompleteRecord
 import java.net.DatagramPacket
 
 /**

@@ -1,9 +1,9 @@
-package mdns.v2.packet
+package mdns.packet
 
 import destination
 import mDNS
 import mdns.minimumBytes
-import mdns.v2.Packet
+import mdns.Packet
 import java.net.DatagramPacket
 import java.nio.ByteBuffer
 import java.util.*

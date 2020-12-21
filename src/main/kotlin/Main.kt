@@ -1,10 +1,10 @@
-import mdns.v2.Header
-import mdns.v2.Packet
-import mdns.v2.asDatagramPacket
-import mdns.v2.records.PTRRecord
-import mdns.v2.records.QueryRecord
-import mdns.v2.records.SRVRecord
-import mdns.v2.records.TXTRecord
+import mdns.Header
+import mdns.Packet
+import mdns.asDatagramPacket
+import mdns.records.PTRRecord
+import mdns.records.QueryRecord
+import mdns.records.SRVRecord
+import mdns.records.TXTRecord
 import java.net.InetAddress
 import java.net.MulticastSocket
 

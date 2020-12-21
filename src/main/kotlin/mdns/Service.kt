@@ -2,8 +2,6 @@ package mdns
 
 import destination
 import mDNS
-import mdns.v2.Packet
-import mdns.v2.asPacket
 import java.net.DatagramPacket
 import java.net.MulticastSocket
 
