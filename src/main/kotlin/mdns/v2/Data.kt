@@ -86,10 +86,10 @@ val DatagramPacket.asPacket
         val header = Header(id, isResponse, opcode, isAuthoritative, isTruncated, isRecursionDesired, isRecursionAvailable, responseCode)
         val packet = Packet(header)
 
-        val questionCount = buffer.short.toInt()
-        val answerCount = buffer.short.toInt()
-        val authorityCount = buffer.short.toInt()
-        val additionalCount = buffer.short.toInt()
+        val questionCount = buffer.short
+        val answerCount = buffer.short
+        val authorityCount = buffer.short
+        val additionalCount = buffer.short
         for (i in 0 until questionCount) {
             val label = readData(buffer)
             val type = RecordType.typeOf(buffer.short)

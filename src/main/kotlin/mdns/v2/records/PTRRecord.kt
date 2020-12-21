@@ -31,16 +31,3 @@ class PTRRecord(override val label: String, var domain: String = "") : CompleteR
     override fun readData(buffer: ByteBuffer) {
     }
 }
-
-
-.DS_Store
-.gitignore
-.gradle/
-.idea/
-build.gradle.kts
-build/
-gradle.properties
-gradlew
-gradlew.bat
-hola-master.zip
-settings.gradle.kts
