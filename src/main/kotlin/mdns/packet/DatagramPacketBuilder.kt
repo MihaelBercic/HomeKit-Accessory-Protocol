@@ -2,8 +2,8 @@ package mdns.packet
 
 import destination
 import mDNS
-import mdns.minimumBytes
 import mdns.Packet
+import mdns.minimumBytes
 import java.net.DatagramPacket
 import java.nio.ByteBuffer
 import java.util.*
@@ -34,7 +34,7 @@ class DatagramPacketBuilder(private val packet: Packet) {
 
         val byteBuffer = ByteBuffer.allocate(9000).apply {
             putShort(header.identification)
-            put(buildFlags())
+            put(flags)
             putShort(queryRecords.size.toShort())
             putShort(answerRecords.size.toShort())
             putShort(authorityRecords.size.toShort())
@@ -44,8 +44,10 @@ class DatagramPacketBuilder(private val packet: Packet) {
             authorityRecords.forEach { it.writeTo(this) }
             additionalRecords.forEach { it.writeTo(this) }
         }
-        val bufferArray = byteBuffer.array().dropLast(byteBuffer.remaining() - 5).toByteArray()
-        return DatagramPacket(bufferArray, bufferArray.size, destination, mDNS)
+        val newArray = ByteArray(byteBuffer.position() + 1)
+        byteBuffer.position(0)
+        byteBuffer.get(newArray)
+        return DatagramPacket(newArray, newArray.size, destination, mDNS)
     }
 
 }

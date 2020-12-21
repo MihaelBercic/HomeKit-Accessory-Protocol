@@ -27,9 +27,18 @@ fun main() {
 
     val packet = Packet(header).apply {
         val question = QueryRecord("_hap._tcp.local")
-        val domain = PTRRecord("_sex._tcp.local", "fyuck")
-        val info = TXTRecord("_hap._tcp.local", mutableMapOf("Fuck" to 5))
-        val srv = SRVRecord("_hap._tcp.local", 0, 10, 3000, "HAP-Bridge")
+        val domain = PTRRecord("_sex._tcp.local").apply {
+            domain = "Fuck you man"
+        }
+        val info = TXTRecord("_hap._tcp.local").apply {
+            "Fuck" compute "You"
+        }
+        val srv = SRVRecord("_hap._tcp.local").apply {
+            port = 3000
+            weight = 100
+            priority = 0
+            host = "HAP-Bridge"
+        }
         queryRecords.add(question)
         answerRecords.add(domain)
         additionalRecords.add(info)

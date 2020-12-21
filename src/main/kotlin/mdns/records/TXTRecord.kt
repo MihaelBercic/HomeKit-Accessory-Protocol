@@ -11,11 +11,14 @@ import java.nio.ByteBuffer
  */
 
 
-class TXTRecord(override val label: String, val data: MutableMap<Any, Any> = mutableMapOf()) : CompleteRecord {
+class TXTRecord(override val label: String) : CompleteRecord {
 
+    private val data: MutableMap<Any, Any> = mutableMapOf()
     override val timeToLive: Int = 120
     override val hasProperty = false
     override val type = RecordType.TXT
+
+    infix fun Any.compute(any: Any) = data.computeIfAbsent(this) { any }
 
     override fun writeData(buffer: ByteBuffer) {
         val dataLength = data.size + data.toString().length - 2
