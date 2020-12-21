@@ -1,0 +1,10 @@
+.DS_Store
+.gradle/
+.idea/
+build/
+gradle.properties
+gradlew
+gradlew.bat
+hola-master.zip
+settings.gradle.kts
+gradle/
