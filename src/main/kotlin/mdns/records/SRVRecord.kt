@@ -11,29 +11,35 @@ import java.nio.ByteBuffer
  */
 
 
-class SRVRecord(override val label: String) : CompleteRecord {
+class SRVRecord(override val label: String, block: SRVRecord.() -> Unit = {}) : CompleteRecord {
+
+    init {
+        apply(block)
+    }
 
     var priority: Int = 0
     var weight: Int = 0
     var port: Int = 0
-    lateinit var host: String
+    lateinit var target: String
 
-    override val timeToLive: Int = 120
     override val hasProperty = false
     override val type = RecordType.SRV
 
     override fun writeData(buffer: ByteBuffer) {
         buffer.apply {
-            val length = host.length + 7
+            val length = target.length + 8
             putShort(length.toShort())
             putShort(priority.toShort())
             putShort(weight.toShort())
             putShort(port.toShort())
-            host encodeLabelInto this
+            target encodeLabelInto this
+            put(0)
         }
     }
 
     override fun readData(buffer: ByteBuffer) {
-        TODO("Not yet implemented")
+        val dataLength = buffer.short
+        println("Skipping $dataLength")
+        buffer.position(buffer.position() + dataLength)
     }
 }

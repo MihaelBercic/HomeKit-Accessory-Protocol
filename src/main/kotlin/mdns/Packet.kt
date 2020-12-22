@@ -21,7 +21,7 @@ data class Packet(
 )
 
 data class Header(
-    val identification: Short,
+    val identification: Short = 0,
     val isResponse: Boolean,
     val opcode: Int = 0,
     val isAuthoritativeAnswer: Boolean = false,

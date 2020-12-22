@@ -11,17 +11,20 @@ import java.nio.ByteBuffer
  */
 
 
-class PTRRecord(override val label: String) : CompleteRecord {
+class PTRRecord(override val label: String, block: PTRRecord.() -> Unit = {}) : CompleteRecord {
+
+    init {
+        apply(block)
+    }
 
     lateinit var domain: String
 
-    override val timeToLive: Int = 10
     override val hasProperty = false
     override val type = RecordType.PTR
 
     override fun writeData(buffer: ByteBuffer) {
         val split = domain.split(".")
-        val length = domain.length + split.size + 1 // + 1 for the null byte in the end.
+        val length = domain.length + 2
         buffer.putShort(length.toShort())
         split.forEach { label ->
             buffer.put(label.length.toByte())

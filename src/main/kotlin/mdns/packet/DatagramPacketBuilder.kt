@@ -47,7 +47,9 @@ class DatagramPacketBuilder(private val packet: Packet) {
         val newArray = ByteArray(byteBuffer.position() + 1)
         byteBuffer.position(0)
         byteBuffer.get(newArray)
-        return DatagramPacket(newArray, newArray.size, destination, mDNS)
+
+        val x = byteBuffer.array().dropLast(byteBuffer.remaining() - 1).toByteArray()
+        return DatagramPacket(x, x.size, destination, mDNS)
     }
 
 }

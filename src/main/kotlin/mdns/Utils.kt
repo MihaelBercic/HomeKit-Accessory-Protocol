@@ -1,8 +1,10 @@
 package mdns
 
+import org.apache.commons.codec.digest.DigestUtils
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.math.pow
+
 
 /**
  * Created by Mihael Valentin Berčič
@@ -38,6 +40,10 @@ fun ByteBuffer.readEncodedLabel(): String {
     return String(characters.toByteArray())
 }
 
+fun generateRandomMAC(): String {
+    val random = Random()
+    return (0 until 6).joinToString(":") { Integer.toHexString(random.nextInt(255) + 1).padStart(2, '0') }
+}
 
 val Byte.isPointer get() = (asString == "11000000")
 val Byte.isCharacter get() = this in 30..255

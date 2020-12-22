@@ -11,19 +11,26 @@ import java.nio.ByteBuffer
  */
 
 
-class TXTRecord(override val label: String) : CompleteRecord {
+class TXTRecord(override val label: String, block: TXTRecord.() -> Unit) : CompleteRecord {
 
-    private val data: MutableMap<Any, Any> = mutableMapOf()
-    override val timeToLive: Int = 120
+    init {
+        apply(block)
+    }
+
+    private val cleanupRegex = "[(,\\s){}]".toRegex()
+
+    private val dataMap: MutableMap<Any, Any> = mutableMapOf()
     override val hasProperty = false
     override val type = RecordType.TXT
 
-    infix fun Any.compute(any: Any) = data.computeIfAbsent(this) { any }
+    infix operator fun Any.rangeTo(data: Any) = dataMap.computeIfAbsent(this) { data }
+
 
     override fun writeData(buffer: ByteBuffer) {
-        val dataLength = data.size + data.toString().length - 2
+        val dataLength = dataMap.size + dataMap.toString().replace(cleanupRegex, "").apply { println(this) }.length
         buffer.putShort(dataLength.toShort())
-        data.forEach { (key, value) ->
+        println(dataLength)
+        dataMap.forEach { (key, value) ->
             val string = "$key=$value"
             val length = string.length
             buffer.put(length.toByte())
@@ -32,6 +39,8 @@ class TXTRecord(override val label: String) : CompleteRecord {
     }
 
     override fun readData(buffer: ByteBuffer) {
-        TODO("Not yet implemented")
+        val dataLength = buffer.short
+        println("Skipping $dataLength")
+        buffer.position(buffer.position() + dataLength)
     }
 }
