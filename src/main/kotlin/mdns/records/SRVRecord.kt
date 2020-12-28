@@ -13,17 +13,16 @@ import java.nio.ByteBuffer
 
 class SRVRecord(override val label: String, block: SRVRecord.() -> Unit = {}) : CompleteRecord {
 
+    var port: Int = 0
+    private var priority: Int = 0
+    private var weight: Int = 0
+    lateinit var target: String
+    override val type = RecordType.SRV
+
     init {
         apply(block)
     }
 
-    var priority: Int = 0
-    var weight: Int = 0
-    var port: Int = 0
-    lateinit var target: String
-
-    override val hasProperty = false
-    override val type = RecordType.SRV
 
     override fun writeData(buffer: ByteBuffer) {
         buffer.apply {
@@ -37,9 +36,4 @@ class SRVRecord(override val label: String, block: SRVRecord.() -> Unit = {}) : 
         }
     }
 
-    override fun readData(buffer: ByteBuffer) {
-        val dataLength = buffer.short
-        println("Skipping $dataLength")
-        buffer.position(buffer.position() + dataLength)
-    }
 }

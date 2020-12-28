@@ -10,8 +10,8 @@ import java.nio.ByteBuffer
 interface CompleteRecord : IncompleteRecord {
 
     val timeToLive: Int get() = 30
-    fun writeData(buffer: ByteBuffer)
-    fun readData(buffer: ByteBuffer)
+    fun writeData(buffer: ByteBuffer) {}
+    fun readData(buffer: ByteBuffer) {}
 
     override fun writeTo(byteBuffer: ByteBuffer) {
         super.writeTo(byteBuffer)

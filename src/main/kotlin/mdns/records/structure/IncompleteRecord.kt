@@ -1,6 +1,6 @@
 package mdns.records.structure
 
-import mdns.minimumBytes
+import minimumBytes
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -12,7 +12,7 @@ import java.util.*
 interface IncompleteRecord {
     val label: String
     val type: RecordType
-    val hasProperty: Boolean
+    val hasProperty: Boolean get() = false
 
     infix fun String.encodeLabelInto(byteBuffer: ByteBuffer) = split(".").forEach {
         byteBuffer.put(it.length.toByte())

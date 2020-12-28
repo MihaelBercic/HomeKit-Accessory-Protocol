@@ -1,10 +1,9 @@
 package mdns.packet
 
-import destination
-import mDNS
 import mdns.Packet
-import mdns.minimumBytes
+import minimumBytes
 import java.net.DatagramPacket
+import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -47,9 +46,7 @@ class DatagramPacketBuilder(private val packet: Packet) {
         val newArray = ByteArray(byteBuffer.position() + 1)
         byteBuffer.position(0)
         byteBuffer.get(newArray)
-
-        val x = byteBuffer.array().dropLast(byteBuffer.remaining() - 1).toByteArray()
-        return DatagramPacket(x, x.size, destination, mDNS)
+        return DatagramPacket(newArray, newArray.size, InetAddress.getByName("224.0.0.251"), 5353)
     }
 
 }

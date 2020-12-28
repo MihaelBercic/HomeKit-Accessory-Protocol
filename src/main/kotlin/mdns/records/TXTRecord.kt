@@ -11,36 +11,27 @@ import java.nio.ByteBuffer
  */
 
 
-class TXTRecord(override val label: String, block: TXTRecord.() -> Unit) : CompleteRecord {
+class TXTRecord(override val label: String, block: TXTRecord.() -> Unit = {}) : CompleteRecord {
+
+    private val cleanupRegex = "[(,\\s){}]".toRegex()
+    private val dataMap: MutableMap<Any, Any> = mutableMapOf()
+    override val type = RecordType.TXT
+    override val hasProperty = true
+
+    infix operator fun Any.rangeTo(data: Any) = dataMap.computeIfAbsent(this) { data }
 
     init {
         apply(block)
     }
 
-    private val cleanupRegex = "[(,\\s){}]".toRegex()
-
-    private val dataMap: MutableMap<Any, Any> = mutableMapOf()
-    override val hasProperty = false
-    override val type = RecordType.TXT
-
-    infix operator fun Any.rangeTo(data: Any) = dataMap.computeIfAbsent(this) { data }
-
-
     override fun writeData(buffer: ByteBuffer) {
-        val dataLength = dataMap.size + dataMap.toString().replace(cleanupRegex, "").apply { println(this) }.length
+        val dataLength = dataMap.size + dataMap.toString().replace(cleanupRegex, "").length
         buffer.putShort(dataLength.toShort())
-        println(dataLength)
         dataMap.forEach { (key, value) ->
             val string = "$key=$value"
             val length = string.length
             buffer.put(length.toByte())
             buffer.put(string.toByteArray())
         }
-    }
-
-    override fun readData(buffer: ByteBuffer) {
-        val dataLength = buffer.short
-        println("Skipping $dataLength")
-        buffer.position(buffer.position() + dataLength)
     }
 }

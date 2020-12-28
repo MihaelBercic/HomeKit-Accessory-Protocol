@@ -1,6 +1,6 @@
 package mdns.packet
 
-import mdns.readEncodedLabel
+import readEncodedLabel
 import mdns.Packet
 import mdns.records.PTRRecord
 import mdns.records.QueryRecord

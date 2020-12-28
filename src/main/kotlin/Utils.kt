@@ -1,6 +1,3 @@
-package mdns
-
-import org.apache.commons.codec.digest.DigestUtils
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.math.pow
@@ -50,7 +47,11 @@ val Byte.isCharacter get() = this in 30..255
 val Byte.isLength get() = this in 1..63
 fun Int.bits(from: Int, count: Int): Int = (this shr from) and (2.0.pow(count) - 1).toInt()
 val ByteArray.asString
-    get() = take(512).map { it.asString.padStart(8, '0') }.chunked(4).joinToString("\n\t") { it.joinToString(" ") }
+    get() = map { it.asString.padStart(8, '0') }.chunked(4).joinToString("\n\t") { it.joinToString(" ") }
+
+val ByteArray.asHexString
+    get() = take(512).map { it.asHexString }.chunked(5).joinToString(" ")
 
 val Byte.asString get() = Integer.toBinaryString(toInt() and 255)
+val Byte.asHexString get() = Integer.toHexString(toInt())
 

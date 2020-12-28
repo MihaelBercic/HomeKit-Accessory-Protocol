@@ -32,8 +32,4 @@ class PTRRecord(override val label: String, block: PTRRecord.() -> Unit = {}) : 
         }
         buffer.put(0)
     }
-
-    override fun readData(buffer: ByteBuffer) {
-
-    }
 }

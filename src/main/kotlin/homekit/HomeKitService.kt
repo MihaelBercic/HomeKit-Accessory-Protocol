@@ -1,5 +1,6 @@
 package homekit
 
+import generateRandomMAC
 import mdns.*
 import mdns.records.ARecord
 import mdns.records.PTRRecord
@@ -24,13 +25,6 @@ class HomeKitService(name: String = "HomeKit") : MulticastService("_hap._tcp.loc
         send(discoveryPacket.asDatagramPacket)
     }
 
-    private val discoveryPacket = Packet(Header(isResponse = true)).apply {
-        answerRecords.add(answer)
-        additionalRecords.add(srvRecord)
-        additionalRecords.add(addressRecord)
-        additionalRecords.add(txtRecord)
-    }
-
     private val answer = PTRRecord(protocol) { domain = recordName }
 
     private val srvRecord = SRVRecord(recordName) {
@@ -51,6 +45,13 @@ class HomeKitService(name: String = "HomeKit") : MulticastService("_hap._tcp.loc
         "ff"..0
         "md"..name
         "sh"..Base64.getEncoder().encodeToString(DigestUtils.sha512("1$myMAC"))
+    }
+
+    private val discoveryPacket = Packet(Header(isResponse = true)).apply {
+        answerRecords.add(answer)
+        additionalRecords.add(srvRecord)
+        additionalRecords.add(addressRecord)
+        additionalRecords.add(txtRecord)
     }
 
     val pairingPin = "000-00-000"

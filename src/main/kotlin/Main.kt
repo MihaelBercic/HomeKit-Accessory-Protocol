@@ -1,3 +1,4 @@
+import homekit.HomeKitServer
 import homekit.HomeKitService
 
 /**
@@ -9,4 +10,5 @@ import homekit.HomeKitService
 
 fun main() {
     HomeKitService().startAdvertising(30000)
+    HomeKitServer()
 }

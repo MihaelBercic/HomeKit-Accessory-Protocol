@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
  * on 22/12/2020 at 13:14
  * using IntelliJ IDEA
  */
-class ARecord(override val label: String, private val block: ARecord.() -> Unit) : CompleteRecord {
+class ARecord(override val label: String, block: ARecord.() -> Unit) : CompleteRecord {
 
     lateinit var address: String
 
@@ -20,9 +20,12 @@ class ARecord(override val label: String, private val block: ARecord.() -> Unit)
         val split = address.split(".")
         buffer.putShort(split.size.toShort())
         split.forEach { buffer.put(it.toInt().toByte()) }
-        buffer.put(0)
     }
 
     override fun readData(buffer: ByteBuffer) {
+    }
+
+    init {
+        apply(block)
     }
 }
