@@ -2,6 +2,8 @@ package homekit.tlv.structure
 
 import homekit.tlv.data.Value
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import kotlin.math.ceil
 
 /**
  * Created by Mihael Valentin Berčič
@@ -13,9 +15,16 @@ interface Item {
     val identifier: Value
     val dataLength: Int get() = data.size
     val data: MutableList<Byte>
-    val needsFragmentation: Boolean get() = dataLength > 255
+    val totalLength: Int get() = dataLength + 2 * ceil(dataLength / 255.0).toInt()
 
-    val writeData: ByteBuffer.() -> Unit get() = { put(data.toByteArray()) }
-    val writeFragmentedData: ByteBuffer.() -> Unit get() = {}
+    val writeData: ByteBuffer.() -> Unit
+        get() = {
+            val type = identifier.typeValue
+            data.chunked(255).forEach { fragment ->
+                put(type)
+                put(fragment.size.toByte())
+                put(fragment.toByteArray())
+            }
+        }
     val readData: ByteBuffer.() -> Unit get() = {}
 }

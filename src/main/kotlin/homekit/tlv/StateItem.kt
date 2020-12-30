@@ -2,7 +2,6 @@ package homekit.tlv
 
 import homekit.tlv.data.Value
 import homekit.tlv.structure.Item
-import java.nio.ByteBuffer
 
 /**
  * Created by Mihael Valentin Berčič
@@ -13,6 +12,5 @@ class StateItem(val value: Byte) : Item {
 
     override val data: MutableList<Byte> = mutableListOf(value)
     override val identifier: Value = Value.State
-    override val writeData: ByteBuffer.() -> Unit = { put(value) }
 
 }

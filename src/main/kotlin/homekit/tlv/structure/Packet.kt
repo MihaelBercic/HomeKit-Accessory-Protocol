@@ -1,10 +1,15 @@
 package homekit.tlv.structure
 
+import asHexString
 import homekit.tlv.MethodItem
+import homekit.tlv.ProofItem
+import homekit.tlv.PublicKeyItem
 import homekit.tlv.StateItem
 import homekit.tlv.data.Method
 import homekit.tlv.data.Value
+import java.math.BigInteger
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 /**
  * Created by Mihael Valentin Berčič
@@ -31,33 +36,30 @@ class Packet {
             byteBuffer.get(dataArray)
 
             if (previous?.identifier == type) {
+                println("Length before adding fragment: ${previous.dataLength}")
                 previous.data.addAll(dataArray.toList())
-                continue@loop
-            }
-
-            val item: Item = when (type) {
-                Value.State -> StateItem(dataArray[0])
-                Value.Method -> MethodItem(Method.valueOf(dataArray[0]))
-                else -> {
-                    println("T: $type ($length)")
-                    continue@loop
+                previous.data.toByteArray().apply { println("---------------------PublicKey---------------------\n${asHexString}\n---------------------PublicKey---------------------") }
+                println("Added fragmented data! Total size: ${previous.dataLength}")
+            } else {
+                val item: Item = when (type) {
+                    Value.State -> StateItem(dataArray[0])
+                    Value.Method -> MethodItem(Method.valueOf(dataArray[0]))
+                    Value.PublicKey -> PublicKeyItem(dataArray)
+                    Value.Proof -> ProofItem(dataArray).apply { println("---------------------Proof---------------------\n${dataArray.asHexString}\n---------------------Proof---------------------") }
+                    else -> {
+                        println("T: $type ($length)")
+                        continue@loop
+                    }
                 }
+                items.add(0, item)
+                previous = item
             }
-            items.add(0, item)
-            previous = item
         }
     }
 
-    fun toByteArray() = ByteArray(5000).apply {
+    fun toByteArray() = ByteArray(items.sumBy { it.totalLength }).apply {
         val buffer = ByteBuffer.wrap(this)
-        items.forEach {
-            if (it.needsFragmentation) buffer.apply(it.writeFragmentedData)
-            else {
-                buffer.put(it.identifier.typeValue)
-                buffer.put(it.dataLength.toByte())
-                buffer.apply(it.writeData)
-            }
-        }
+        items.forEach { it.writeData(buffer) }
     }
 
 }

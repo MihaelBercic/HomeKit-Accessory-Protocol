@@ -42,15 +42,25 @@ fun generateRandomMAC(): String {
     return (0 until 6).joinToString(":") { Integer.toHexString(random.nextInt(255) + 1).padStart(2, '0') }
 }
 
-val Byte.isPointer get() = (asString == "11000000")
+val Byte.isPointer get() = asString == "11000000"
 val Byte.isCharacter get() = this in 30..255
 val Byte.isLength get() = this in 1..63
 fun Int.bits(from: Int, count: Int): Int = (this shr from) and (2.0.pow(count) - 1).toInt()
+
+
+// To be ignored. Is code simply for debugging
 val ByteArray.asString
     get() = map { it.asString.padStart(8, '0') }.chunked(4).joinToString("\n\t") { it.joinToString(" ") }
 
 val ByteArray.asHexString
-    get() = take(512).map { it.asHexString }.chunked(5).joinToString(" ")
+    get() = toList()
+        .chunked(4)
+        .map {
+            it.joinToString("") { Integer.toHexString(it.toInt() and 255).padStart(2, '0') }
+        }
+        .chunked(4)
+        .joinToString("\n") { it.joinToString(" ") }
+
 
 val Byte.asString get() = Integer.toBinaryString(toInt() and 255)
 val Byte.asHexString get() = Integer.toHexString(toInt())
