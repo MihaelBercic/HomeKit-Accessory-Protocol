@@ -24,17 +24,17 @@ class PairSetup {
 
     var currentState: Int = 1
     private val secureRandom = SecureRandom()
-    private val N = SRP6CryptoParams.N_3072
-    private val g = SRP6CryptoParams.g_large
+    private val prime = SRP6CryptoParams.N_3072
+    private val generator = SRP6CryptoParams.g_large
     private val digest = MessageDigest.getInstance("SHA-512")
     private val routines = SRP6Routines()
 
     private val username = "Pair-Setup"
-    private lateinit var v: BigInteger
-    private lateinit var k: BigInteger
-    private lateinit var b: BigInteger
-    private lateinit var B: BigInteger
-    private lateinit var A: BigInteger
+    private lateinit var verifier: BigInteger
+    private lateinit var multiplier: BigInteger
+    private lateinit var privateServerKey: BigInteger
+    private lateinit var publicServerKey: BigInteger
+    private lateinit var publicClientKey: BigInteger
 
 
     fun handleRequest(context: Context) {
@@ -58,14 +58,14 @@ class PairSetup {
         val salt = routines.generateRandomSalt(16)
         val x = routines.computeX(digest, salt, password.toByteArray()).apply { digest.reset() }
 
-        v = routines.computeVerifier(N, g, x)
-        k = routines.computeK(digest, N, g).apply { digest.reset() }
-        b = routines.generatePrivateValue(N, secureRandom)
-        B = routines.computePublicServerValue(N, g, k, v, b)
+        verifier = routines.computeVerifier(prime, generator, x)
+        multiplier = routines.computeK(digest, prime, generator).apply { digest.reset() }
+        privateServerKey = routines.generatePrivateValue(prime, secureRandom)
+        publicServerKey = routines.computePublicServerValue(prime, generator, multiplier, verifier, privateServerKey)
 
         val state = StateItem(2)
         val saltItem = SaltItem(salt)
-        val pubicKeyItem = PublicKeyItem(BigIntegerUtils.bigIntegerToBytes(B))
+        val pubicKeyItem = PublicKeyItem(BigIntegerUtils.bigIntegerToBytes(publicServerKey))
         val responsePacket = Packet(state, pubicKeyItem, saltItem)
         currentState = 3
         context.result(responsePacket.toByteArray())
@@ -75,11 +75,11 @@ class PairSetup {
         val clientPublicKey = packet.find { it is PublicKeyItem } as? PublicKeyItem ?: return
         val clientProofItem = packet.find { it is ProofItem } as? ProofItem ?: return
 
-        A = BigIntegerUtils.bigIntegerFromBytes(clientPublicKey.data.toByteArray())
+        publicClientKey = BigIntegerUtils.bigIntegerFromBytes(clientPublicKey.data.toByteArray())
 
-        val u = routines.computeU(digest, N, A, B).apply { digest.reset() }
-        val S = routines.computeSessionKey(N, v, u, A, b)
-        val computedClientEvidence = routines.computeClientEvidence(digest, A, B, S).apply { digest.reset() }
+        val u = routines.computeU(digest, prime, publicClientKey, publicServerKey).apply { digest.reset() }
+        val S = routines.computeSessionKey(prime, verifier, u, publicClientKey, privateServerKey)
+        val computedClientEvidence = routines.computeClientEvidence(digest, publicClientKey, publicServerKey, S).apply { digest.reset() }
         val clientEvidence = BigIntegerUtils.bigIntegerFromBytes(clientProofItem.data.toByteArray())
 
         println("Client:")
