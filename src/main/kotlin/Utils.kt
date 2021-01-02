@@ -1,5 +1,8 @@
+import java.math.BigInteger
 import java.nio.ByteBuffer
+import java.security.MessageDigest
 import java.util.*
+import kotlin.experimental.xor
 import kotlin.math.pow
 
 
@@ -65,3 +68,33 @@ val ByteArray.asHexString
 val Byte.asString get() = Integer.toBinaryString(toInt() and 255)
 val Byte.asHexString get() = Integer.toHexString(toInt())
 
+fun MessageDigest.hash(vararg bytes: Byte): ByteArray {
+    update(bytes)
+    return digest()
+}
+
+infix fun ByteArray.xor(b2: ByteArray): ByteArray {
+    val result = ByteArray(size)
+    for (i in indices) result[i] = (this[i] xor b2[i])
+    return result
+}
+
+
+val String.asBigInteger get() = BigInteger(this, 16)
+val ByteArray.asBigInteger get() = BigInteger(1, this)
+
+
+infix fun BigInteger.padded(length: Int): ByteArray {
+    val array = asByteArray
+    val difference = length - array.size
+
+    return if (difference <= 0) array
+    else array.copyInto(ByteArray(length), destinationOffset = difference)
+}
+
+val BigInteger.asHex get() = asByteArray.asHexString
+val BigInteger.asByteArray: ByteArray
+    get() = toByteArray().let {
+        assert(signum() != -1)
+        if (it[0].toInt().and(255) == 0) it.copyOfRange(1, it.size) else it
+    }

@@ -2,14 +2,12 @@ package homekit.tlv.structure
 
 import asHexString
 import homekit.tlv.MethodItem
-import homekit.tlv.ProofItem
+import homekit.tlv.EvidenceItem
 import homekit.tlv.PublicKeyItem
 import homekit.tlv.StateItem
 import homekit.tlv.data.Method
 import homekit.tlv.data.Value
-import java.math.BigInteger
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 /**
  * Created by Mihael Valentin Berčič
@@ -45,7 +43,7 @@ class Packet {
                     Value.State -> StateItem(dataArray[0])
                     Value.Method -> MethodItem(Method.valueOf(dataArray[0]))
                     Value.PublicKey -> PublicKeyItem(dataArray)
-                    Value.Proof -> ProofItem(dataArray).apply { println("---------------------Proof---------------------\n${dataArray.asHexString}\n---------------------Proof---------------------") }
+                    Value.Proof -> EvidenceItem(dataArray).apply { println("---------------------Proof---------------------\n${dataArray.asHexString}\n---------------------Proof---------------------") }
                     else -> {
                         println("T: $type ($length)")
                         continue@loop

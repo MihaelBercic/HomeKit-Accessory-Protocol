@@ -8,7 +8,7 @@ import homekit.tlv.structure.Item
  * on 28/12/2020 at 17:46
  * using IntelliJ IDEA
  */
-class ProofItem(proof: ByteArray) : Item {
+class EvidenceItem(proof: ByteArray) : Item {
 
     override val identifier: Value = Value.Proof
     override val data: MutableList<Byte> = proof.toMutableList()
