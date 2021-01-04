@@ -1,6 +1,6 @@
 package homekit.tlv
 
-import homekit.tlv.data.Value
+import homekit.tlv.structure.TLVValue
 import homekit.tlv.structure.Item
 
 /**
@@ -10,7 +10,7 @@ import homekit.tlv.structure.Item
  */
 class EvidenceItem(proof: ByteArray) : Item {
 
-    override val identifier: Value = Value.Proof
+    override val identifier: TLVValue = TLVValue.Proof
     override val data: MutableList<Byte> = proof.toMutableList()
 
 }

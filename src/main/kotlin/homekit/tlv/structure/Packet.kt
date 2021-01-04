@@ -1,12 +1,6 @@
 package homekit.tlv.structure
 
-import asHexString
-import homekit.tlv.MethodItem
-import homekit.tlv.EvidenceItem
-import homekit.tlv.PublicKeyItem
-import homekit.tlv.StateItem
-import homekit.tlv.data.Method
-import homekit.tlv.data.Value
+import homekit.tlv.parseTLV
 import java.nio.ByteBuffer
 
 /**
@@ -16,48 +10,20 @@ import java.nio.ByteBuffer
  */
 class Packet {
 
-    val items: MutableList<Item> = mutableListOf()
+    private val items: MutableList<Item> = mutableListOf()
 
     fun find(predicate: (Item) -> Boolean) = items.firstOrNull(predicate)
+
+    inline fun <reified T : Item> get(noinline predicate: (Item) -> Boolean = { it is T }) = find(predicate) as? T ?: throw Exception("TLV item ${T::class.java} not found")
 
     constructor(vararg items: Item) {
         this.items.addAll(items)
     }
 
     constructor(byteArray: ByteArray) {
-        val byteBuffer = ByteBuffer.wrap(byteArray)
-        var previous: Item? = null
-        loop@ while (byteBuffer.hasRemaining()) {
-            val type = Value.valueOf(byteBuffer.get())
-            val length = byteBuffer.get().toInt() and 255
-            val dataArray = ByteArray(length)
-            byteBuffer.get(dataArray)
-
-            if (previous?.identifier == type) {
-                println("Length before adding fragment: ${previous.dataLength}")
-                previous.data.addAll(dataArray.toList())
-                previous.data.toByteArray().apply { println("---------------------PublicKey---------------------\n${asHexString}\n---------------------PublicKey---------------------") }
-                println("Added fragmented data! Total size: ${previous.dataLength}")
-            } else {
-                val item: Item = when (type) {
-                    Value.State -> StateItem(dataArray[0])
-                    Value.Method -> MethodItem(Method.valueOf(dataArray[0]))
-                    Value.PublicKey -> PublicKeyItem(dataArray)
-                    Value.Proof -> EvidenceItem(dataArray).apply { println("---------------------Proof---------------------\n${dataArray.asHexString}\n---------------------Proof---------------------") }
-                    else -> {
-                        println("T: $type ($length)")
-                        continue@loop
-                    }
-                }
-                items.add(0, item)
-                previous = item
-            }
-        }
+        items.addAll(parseTLV(byteArray))
     }
 
-    fun toByteArray() = ByteArray(items.sumBy { it.totalLength }).apply {
-        val buffer = ByteBuffer.wrap(this)
-        items.forEach { it.writeData(buffer) }
-    }
+    fun toByteArray(): ByteArray = ByteBuffer.allocate(items.sumBy { it.totalLength }).apply { items.forEach { it.writeData(this) } }.array()
 
 }

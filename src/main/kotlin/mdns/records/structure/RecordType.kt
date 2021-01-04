@@ -6,12 +6,6 @@ package mdns.records.structure
  * using IntelliJ IDEA
  */
 
-enum class ResourceClass(val id: Int) {
-    IN(1),
-    NO(-1)
-}
-
-
 enum class RecordType(val id: Short) {
     Unsupported(-1),
     A(1),

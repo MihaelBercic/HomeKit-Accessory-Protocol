@@ -25,31 +25,26 @@ class HomeKitService(name: String = "HomeKit") : MulticastService("_hap._tcp.loc
     private val recordName = "$name.$protocol"
     private val digest = MessageDigest.getInstance("SHA-512")
     private val myMAC = generateRandomMAC() // TODO TAKE PERSISTENT FROM JSON
-
-    override var onDiscovery: MulticastSocket.() -> Unit = {
-        send(discoveryPacket.asDatagramPacket)
-    }
-
     private val answer = PTRRecord(protocol) { domain = recordName }
+
+    override var onDiscovery: MulticastSocket.() -> Unit = { send(discoveryPacket.asDatagramPacket) }
 
     private val srvRecord = SRVRecord(recordName) {
         port = 3000
         target = "$name.local"
     }
 
-    private val addressRecord = ARecord("$name.local") {
-        address = localhost.hostAddress
-    }
+    private val addressRecord = ARecord("$name.local") { address = localhost.hostAddress }
 
     private val txtRecord = TXTRecord(recordName) {
-        "id"..myMAC
-        "sf"..1
-        "c#"..1
-        "s#"..1
-        "ci"..1
-        "ff"..0
-        "md"..name
-        "sh"..Base64.getEncoder().encodeToString(digest.hash(*"1$myMAC".toByteArray()))
+        put("id", myMAC)
+        put("sf", 1)
+        put("c#", 1)
+        put("s#", 1)
+        put("ci", 1)
+        put("ff", 0)
+        put("md", name)
+        put("sh", Base64.getEncoder().encodeToString(digest.hash(*"1$myMAC".toByteArray())))
     }
 
     private val discoveryPacket = Packet(Header(isResponse = true)).apply {
@@ -58,7 +53,5 @@ class HomeKitService(name: String = "HomeKit") : MulticastService("_hap._tcp.loc
         additionalRecords.add(addressRecord)
         additionalRecords.add(txtRecord)
     }
-
-    val pairingPin = "000-00-000"
 
 }

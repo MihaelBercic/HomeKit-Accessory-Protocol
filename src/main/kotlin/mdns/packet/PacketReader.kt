@@ -1,6 +1,5 @@
 package mdns.packet
 
-import readEncodedLabel
 import mdns.Packet
 import mdns.records.PTRRecord
 import mdns.records.QueryRecord
@@ -8,6 +7,7 @@ import mdns.records.SRVRecord
 import mdns.records.TXTRecord
 import mdns.records.structure.CompleteRecord
 import mdns.records.structure.RecordType
+import readEncodedLabel
 import java.net.DatagramPacket
 import java.nio.ByteBuffer
 
@@ -16,7 +16,7 @@ import java.nio.ByteBuffer
  * on 21/12/2020 at 16:23
  * using IntelliJ IDEA
  */
-class PacketReader(private val datagramPacket: DatagramPacket) {
+class PacketReader(datagramPacket: DatagramPacket) {
 
     private data class RecordInformation(val label: String, val type: RecordType, val classCode: Int)
 

@@ -13,21 +13,13 @@ class HomeKitServer : Javalin() {
     private val pairSetup = PairSetup()
 
     init {
+        config.showJavalinBanner = false
 
-        before {
-            println(it.path())
-        }
+        before { println(it.path()) }
 
-
-        exception(Exception::class.java) { exception, context ->
-            exception.printStackTrace()
-        }
+        exception(Exception::class.java) { exception, _ -> exception.printStackTrace() }
 
         post("/pair-setup", pairSetup::handleRequest)
-
-        post("/pair-verify") { println("Data from VERIFY!") }
-        post("/accessories") { println("Data from ACCESSORIES!") }
-        post("/pairings") { println("Data from PAIRINGS!") }
 
         start(3000)
     }

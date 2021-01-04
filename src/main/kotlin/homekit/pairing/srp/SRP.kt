@@ -36,13 +36,18 @@ class SRP {
     private lateinit var verifier: BigInteger
     private lateinit var privateKey: BigInteger
     private lateinit var publicKey: BigInteger
+    lateinit var sessionKey: BigInteger
+
+    private fun computePublicKey(): BigInteger = generator.modPow(privateKey, prime) + (multiplier.multiply(verifier)).mod(prime).let {
+        if (it.asByteArray.size == 384) it else computePublicKey()
+    }
 
     fun performFirstStep(password: String): BigInteger {
         val hashedCredentials = digest.hash(*identifier, ':'.toByte(), *password.toByteArray())
         val x = digest.hash(*salt, *hashedCredentials).asBigInteger
         verifier = generator.modPow(x, prime)
         privateKey = BigInteger(3072, secureRandom).mod(prime)
-        publicKey = generator.modPow(privateKey, prime) + (multiplier.multiply(verifier)).mod(prime)
+        publicKey = computePublicKey()
         return publicKey
     }
 
@@ -50,7 +55,8 @@ class SRP {
         val paddedClientPublicKey = clientPublicKey padded 384
         val paddedPublicKey = publicKey padded 384
         val u = digest.hash(*paddedClientPublicKey, *paddedPublicKey).asBigInteger
-        val sessionKey = verifier.modPow(u, prime).multiply(clientPublicKey).modPow(privateKey, prime)
+
+        sessionKey = verifier.modPow(u, prime).multiply(clientPublicKey).modPow(privateKey, prime)
 
         val sessionKeyArray = sessionKey.asByteArray
         val clientPublicKeyArray = clientPublicKey.asByteArray
@@ -59,7 +65,7 @@ class SRP {
         if (computedEvidence != clientEvidence) throw Exception("Evidences do not match...")
         return computeServerEvidence(sessionKeyArray, clientPublicKeyArray, clientEvidence.asByteArray)
     }
-    
+
     private fun computeClientEvidence(sessionKeyArray: ByteArray, clientPublicKey: ByteArray): BigInteger {
         val hashedPrime = digest.hash(*primeArray)
         val hashedGenerator = digest.hash(*generatorArray)

@@ -43,6 +43,7 @@ class DatagramPacketBuilder(private val packet: Packet) {
             authorityRecords.forEach { it.writeTo(this) }
             additionalRecords.forEach { it.writeTo(this) }
         }
+
         val newArray = ByteArray(byteBuffer.position() + 1)
         byteBuffer.position(0)
         byteBuffer.get(newArray)

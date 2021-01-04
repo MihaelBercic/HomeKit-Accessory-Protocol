@@ -1,11 +1,11 @@
-package homekit.tlv.data
+package homekit.tlv.structure
 
 /**
  * Created by Mihael Valentin Berčič
  * on 24/12/2020 at 11:36
  * using IntelliJ IDEA
  */
-enum class Value(val typeValue: Byte) {
+enum class TLVValue(val typeValue: Byte) {
     Method(0),
     Identifier(1),
     Salt(2),

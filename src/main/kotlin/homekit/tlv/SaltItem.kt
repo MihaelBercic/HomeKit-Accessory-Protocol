@@ -1,7 +1,7 @@
 package homekit.tlv
 
-import homekit.tlv.data.Value
 import homekit.tlv.structure.Item
+import homekit.tlv.structure.TLVValue
 
 /**
  * Created by Mihael Valentin Berčič
@@ -10,7 +10,7 @@ import homekit.tlv.structure.Item
  */
 class SaltItem(salt: ByteArray) : Item {
 
-    override val identifier: Value = Value.Salt
-    override val data: MutableList<Byte> = salt.toMutableList() // Big endian to little endian
+    override val identifier: TLVValue = TLVValue.Salt
+    override val data: MutableList<Byte> = salt.toMutableList()
 
 }

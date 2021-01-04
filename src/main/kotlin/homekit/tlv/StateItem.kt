@@ -1,6 +1,6 @@
 package homekit.tlv
 
-import homekit.tlv.data.Value
+import homekit.tlv.structure.TLVValue
 import homekit.tlv.structure.Item
 
 /**
@@ -10,7 +10,7 @@ import homekit.tlv.structure.Item
  */
 class StateItem(val value: Byte) : Item {
 
+    override val identifier: TLVValue = TLVValue.State
     override val data: MutableList<Byte> = mutableListOf(value)
-    override val identifier: Value = Value.State
 
 }

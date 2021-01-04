@@ -1,8 +1,6 @@
 package homekit.tlv.structure
 
-import homekit.tlv.data.Value
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.math.ceil
 
 /**
@@ -12,7 +10,7 @@ import kotlin.math.ceil
  */
 interface Item {
 
-    val identifier: Value
+    val identifier: TLVValue
     val dataLength: Int get() = data.size
     val data: MutableList<Byte>
     val totalLength: Int get() = dataLength + 2 * ceil(dataLength / 255.0).toInt()

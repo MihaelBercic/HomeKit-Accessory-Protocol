@@ -1,6 +1,6 @@
 package homekit.tlv
 
-import homekit.tlv.data.Value
+import homekit.tlv.structure.TLVValue
 import homekit.tlv.structure.Item
 
 /**
@@ -10,7 +10,7 @@ import homekit.tlv.structure.Item
  */
 class IdentifierItem(tag: String) : Item {
 
-    override val identifier: Value = Value.Identifier
+    override val identifier: TLVValue = TLVValue.Identifier
     override val data: MutableList<Byte> = tag.toByteArray().toMutableList()
 
 }

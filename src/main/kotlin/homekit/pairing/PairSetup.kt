@@ -3,10 +3,7 @@ package homekit.pairing
 import asBigInteger
 import asByteArray
 import homekit.pairing.srp.SRP
-import homekit.tlv.EvidenceItem
-import homekit.tlv.PublicKeyItem
-import homekit.tlv.SaltItem
-import homekit.tlv.StateItem
+import homekit.tlv.*
 import homekit.tlv.structure.Packet
 import io.javalin.http.Context
 import java.util.*
@@ -27,21 +24,26 @@ class PairSetup {
     fun handleRequest(context: Context) {
         context.header("Content-Type", "application/pairing+tlv8")
         val packet = Packet(context.bodyAsBytes())
-        val stateItem = packet.find { it is StateItem } as? StateItem ?: return
+        val stateItem = packet.get<StateItem>()
 
         val requestedValue = stateItem.value.toInt()
         println("Current state: $currentState vs. $requestedValue")
         if (requestedValue != currentState) return
 
         when (requestedValue) {
-            1 -> firstStep(context)
-            3 -> secondStep(context, packet)
+            1 -> computeStartingInformation(context)
+            3 -> verifyDeviceProof(context, packet)
+            5 -> {
+                val encrypted = packet.get<EncryptedItem>()
+                println("We have our encrypted item!")
+                encrypted.thirdStep(srp)
+            }
         }
 
     }
 
-    private fun firstStep(context: Context) {
-        val password = generatePin().apply { println("Pin: $this") }
+    private fun computeStartingInformation(context: Context) {
+        val password = "111-11-111".apply { println("Pin: $this") }
         val publicKey = srp.performFirstStep(password)
 
         val state = StateItem(2)
@@ -52,9 +54,9 @@ class PairSetup {
         context.result(responsePacket.toByteArray())
     }
 
-    private fun secondStep(context: Context, packet: Packet) {
-        val clientPublicKeyItem = packet.find { it is PublicKeyItem } as? PublicKeyItem ?: return
-        val clientEvidenceItem = packet.find { it is EvidenceItem } as? EvidenceItem ?: return
+    private fun verifyDeviceProof(context: Context, packet: Packet) {
+        val clientPublicKeyItem = packet.get<PublicKeyItem>()
+        val clientEvidenceItem = packet.get<EvidenceItem>()
 
         val clientKey = clientPublicKeyItem.data.toByteArray().asBigInteger
         val clientEvidence = clientEvidenceItem.data.toByteArray().asBigInteger

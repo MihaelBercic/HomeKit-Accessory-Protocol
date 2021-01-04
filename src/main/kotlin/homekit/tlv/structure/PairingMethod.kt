@@ -1,11 +1,11 @@
-package homekit.tlv.data
+package homekit.tlv.structure
 
 /**
  * Created by Mihael Valentin Berčič
  * on 24/12/2020 at 11:36
  * using IntelliJ IDEA
  */
-enum class Method(val typeValue: Byte) {
+enum class PairingMethod(val typeValue: Byte) {
     PairSetup(0),
     PairSetupAuthentication(1),
     PairVerify(2),

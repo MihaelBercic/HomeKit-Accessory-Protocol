@@ -1,6 +1,6 @@
 package homekit.tlv
 
-import homekit.tlv.data.Value
+import homekit.tlv.structure.TLVValue
 import homekit.tlv.structure.Item
 
 /**
@@ -10,7 +10,7 @@ import homekit.tlv.structure.Item
  */
 class PublicKeyItem(publicKey: ByteArray) : Item {
 
-    override val identifier: Value = Value.PublicKey
+    override val identifier: TLVValue = TLVValue.PublicKey
     override val data: MutableList<Byte> = publicKey.toMutableList().apply { println("Public key has size: $size") }
 
 }

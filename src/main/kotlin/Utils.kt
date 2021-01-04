@@ -12,6 +12,8 @@ import kotlin.math.pow
  * using IntelliJ IDEA
  */
 
+// TODO cleanup... pls...
+
 fun BitSet.minimumBytes(n: Int): ByteArray {
     val byteArray = toByteArray()
     val difference = n - byteArray.size
