@@ -37,18 +37,15 @@ class SRP {
     private lateinit var privateKey: BigInteger
     private lateinit var publicKey: BigInteger
     lateinit var sessionKey: BigInteger
-
-    private fun computePublicKey(): BigInteger = generator.modPow(privateKey, prime) + (multiplier.multiply(verifier)).mod(prime).let {
-        if (it.asByteArray.size == 384) it else computePublicKey()
-    }
+    lateinit var sharedSecret: ByteArray
 
     fun performFirstStep(password: String): BigInteger {
         val hashedCredentials = digest.hash(*identifier, ':'.toByte(), *password.toByteArray())
         val x = digest.hash(*salt, *hashedCredentials).asBigInteger
         verifier = generator.modPow(x, prime)
         privateKey = BigInteger(3072, secureRandom).mod(prime)
-        publicKey = computePublicKey()
-        return publicKey
+        publicKey = generator.modPow(privateKey, prime) + (multiplier.multiply(verifier)).mod(prime)
+        return if (publicKey.asByteArray.size == 384) publicKey else performFirstStep(password)
     }
 
     fun performSecondStep(clientPublicKey: BigInteger, clientEvidence: BigInteger): BigInteger {
@@ -57,6 +54,7 @@ class SRP {
         val u = digest.hash(*paddedClientPublicKey, *paddedPublicKey).asBigInteger
 
         sessionKey = verifier.modPow(u, prime).multiply(clientPublicKey).modPow(privateKey, prime)
+        sharedSecret = digest.hash(*sessionKey.asByteArray)
 
         val sessionKeyArray = sessionKey.asByteArray
         val clientPublicKeyArray = clientPublicKey.asByteArray

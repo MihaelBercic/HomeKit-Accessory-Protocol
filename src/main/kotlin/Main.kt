@@ -1,5 +1,7 @@
 import homekit.HomeKitServer
 import homekit.HomeKitService
+import homekit.pairing.ChaCha
+import javax.crypto.spec.ChaCha20ParameterSpec
 
 /**
  * Created by Mihael Valentin Berčič

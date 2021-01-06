@@ -1,5 +1,11 @@
 package homekit.pairing
 
+import asString
+import java.nio.ByteBuffer
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+
 
 /**
  * Created by Mihael Valentin Berčič
@@ -8,6 +14,20 @@ package homekit.pairing
  */
 class ChaCha {
 
+    // Throws Tag Mismatch...
+    fun decrypt(data: ByteArray, key: ByteArray) {
+        val cipher = Cipher.getInstance("ChaCha20-Poly1305")
+        val buffer = ByteBuffer.allocate(12)
+        buffer.position(4)
+        buffer.put("PS-Msg05".toByteArray())
+
+        val iv = IvParameterSpec(buffer.array().apply { println("Nonce: $size") })
+        val spec = SecretKeySpec(key, "ChaCha20-Poly1305")
+        cipher.init(Cipher.DECRYPT_MODE, spec, iv)
+
+        val decrypted = cipher.doFinal(data.drop(12).toByteArray())
+        println(decrypted.asString)
+    }
 
     /* TODO taken online to study the implementation
     // if no nonce, generate a random 12 bytes nonce
