@@ -1,11 +1,13 @@
 package homekit.tlv
 
+import asByteArray
 import asHexString
 import at.favre.lib.crypto.HKDF
 import homekit.pairing.ChaCha
 import homekit.pairing.srp.SRP
 import homekit.tlv.structure.Item
 import homekit.tlv.structure.TLVValue
+import java.io.File
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -20,13 +22,24 @@ class EncryptedItem(data: ByteArray) : Item {
     private val chaCha = ChaCha()
 
     fun thirdStep(srp: SRP) {
+
+        val sharedSecret = srp.sharedSecret
+
+        File("data").writeBytes(data.toByteArray())
+        File("secret").writeBytes(sharedSecret)
+        File("session").writeBytes(srp.sessionKey.asByteArray)
+
+
         val theirTag = data.takeLast(16).toByteArray()
         val cipherText = data.dropLast(16).toByteArray()
 
         val salt = "Pair-Setup-Controller-Sign-Salt".toByteArray()
         val info = "Pair-Setup-Controller-Sign-Info".toByteArray()
 
-        val sharedSecret = srp.sharedSecret
+        println("Data equals: " + File("data").readBytes().contentEquals(data.toByteArray()))
+        println("Secret equals: " + File("secret").readBytes().contentEquals(sharedSecret))
+        println("Session equals: " + File("session").readBytes().contentEquals(srp.sessionKey.toByteArray()))
+
 
         // Not used, cus produces 64 bytes...
         val mac = Mac.getInstance("HmacSHA512")
