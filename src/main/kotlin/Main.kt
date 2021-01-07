@@ -15,21 +15,20 @@ import javax.crypto.spec.SecretKeySpec
  * using IntelliJ IDEA
  */
 
+val salt = "Pair-Setup-Controller-Sign-Salt".toByteArray()
+val info = "Pair-Setup-Controller-Sign-Info".toByteArray()
+val outputLength = 32
+
+// Stored from Pair Setup
+val data = File("data").readBytes()
+val key = File("secret").readBytes()
+val session = File("session").readBytes()
 
 fun main() {
-    val salt = "Pair-Setup-Controller-Sign-Salt".toByteArray()
-    val info = "Pair-Setup-Controller-Sign-Info".toByteArray()
-    val outputLength = 32
-
-    // Stored from Pair Setup
-    val data = File("data").readBytes()
-    val key = File("secret").readBytes()
-    val session = File("session").readBytes()
-
-    val hkdf = HKDF.fromHmacSha512()
+    val hkdf = HKDF.fromHmacSha512() // Using HKDF implementation, but was wondering if there is a way of doing so without an external lib...
     val saltExtract = hkdf.extract(salt, key)
     val infoExpand = hkdf.expand(key, info, 32)
-    val outputHKDF = hkdf.extractAndExpand(saltExtract, key, infoExpand, 32)
+    val outputHKDF = hkdf.extractAndExpand(saltExtract, key, infoExpand, outputLength)
 
     Base64.getEncoder().apply {
         println("Key: " + encodeToString(key))
@@ -61,8 +60,6 @@ fun main() {
         update(info)
     }
     val output = mac.doFinal()
-    println("Output [${output.size}]: " + base64.encodeToString(output))
-
 
     return
     HomeKitService().startAdvertising(30000)
