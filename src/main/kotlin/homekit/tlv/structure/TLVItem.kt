@@ -10,16 +10,17 @@ import kotlin.math.ceil
  */
 open class TLVItem(val identifier: TLVValue, vararg content: Byte = ByteArray(0)) {
 
-    val data = content.toMutableList()
-    val dataLength: Int get() = data.size
+    val dataList = content.toMutableList()
+    val dataArray get() = dataList.toByteArray()
+    val dataLength: Int get() = dataList.size
     val totalLength: Int get() = dataLength + 2 * ceil(dataLength / 255.0).toInt()
 
-    fun appendData(dataToAppend: ByteArray) = data.addAll(dataToAppend.toTypedArray())
+    fun appendData(dataToAppend: ByteArray) = dataList.addAll(dataToAppend.toTypedArray())
 
     val writeData: ByteBuffer.() -> Unit
         get() = {
             val type = identifier.typeValue
-            data.toList().chunked(255).forEach { fragment ->
+            dataList.toList().chunked(255).forEach { fragment ->
                 put(type)
                 put(fragment.size.toByte())
                 put(fragment.toByteArray())

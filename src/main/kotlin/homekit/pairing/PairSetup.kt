@@ -46,7 +46,7 @@ class PairSetup {
         val packet = TLVPacket(context.bodyAsBytes())
 
         val stateItem = packet[TLVValue.State]
-        val requestedValue = stateItem.data[0].toInt()
+        val requestedValue = stateItem.dataList[0].toInt()
 
         println("Current state: $currentState vs. $requestedValue")
         if (requestedValue != currentState) return
@@ -61,7 +61,7 @@ class PairSetup {
 
     private fun computeStartingInformation(context: Context) {
         val password = "111-11-111".apply { println("Pin: $this") }
-        val publicKey = srp.performFirstStep(password)
+        val publicKey = srp.computePublicKey(password)
 
         val responsePacket = TLVPacket(
             TLVItem(TLVValue.State, 2),
@@ -76,9 +76,9 @@ class PairSetup {
         val clientPublicKeyItem = packet[TLVValue.PublicKey]
         val clientEvidenceItem = packet[TLVValue.Proof]
 
-        val clientKey = clientPublicKeyItem.data.toByteArray().asBigInteger
-        val clientEvidence = clientEvidenceItem.data.toByteArray().asBigInteger
-        val evidence = srp.performSecondStep(clientKey, clientEvidence)
+        val clientKey = clientPublicKeyItem.dataArray.asBigInteger
+        val clientEvidence = clientEvidenceItem.dataArray.asBigInteger
+        val evidence = srp.verifyDevice(clientKey, clientEvidence)
 
         val responsePacket = TLVPacket(
             TLVItem(TLVValue.State, 4),
@@ -90,7 +90,7 @@ class PairSetup {
 
     private fun decryptPublicInformation(context: Context, packet: TLVPacket) {
         val deviceEncryptedItem = packet[TLVValue.EncryptedData]
-        val encryptedData = deviceEncryptedItem.data.toByteArray()
+        val encryptedData = deviceEncryptedItem.dataArray
         val sharedSecret = srp.sharedSecret
         val encryptionHKDF = HKDF.compute("HMACSHA512", sharedSecret, encryptionSalt, encryptionInfo, 32)
 
@@ -107,9 +107,9 @@ class PairSetup {
         val publicKeyItem = parsedPacket[TLVValue.PublicKey]
         val signatureItem = parsedPacket[TLVValue.Signature]
 
-        val devicePublicKey = publicKeyItem.data.toByteArray()
-        val deviceSignature = signatureItem.data.toByteArray()
-        val deviceIdentifier = identifierItem.data.toByteArray()
+        val devicePublicKey = publicKeyItem.dataArray
+        val deviceSignature = signatureItem.dataArray
+        val deviceIdentifier = identifierItem.dataArray
 
         val controllerHKDF = HKDF.compute("HMACSHA512", sharedSecret, controllerSalt, controllerInfo, 32)
 
@@ -141,20 +141,17 @@ class PairSetup {
         val keyPair = keyPairGenerator.generateKeyPair()
         val privateKey = keyPair.private
         val publicKey = keyPair.public as EdECPublicKey
+        // TODO store key pair
 
         val publicKeyPoint = publicKey.point
-        val isPublicKeyXOdd = publicKeyPoint.isXOdd
-        val publicKeyY = publicKeyPoint.y
-        val publicKeyArray = publicKeyY.asByteArray.reversedArray() // as little endian
+        val publicKeyArray = publicKeyPoint.y.asByteArray.reversedArray()
 
         val lastIndex = publicKeyArray.lastIndex
         val lastByte = publicKeyArray[lastIndex].toInt()
-        if (isPublicKeyXOdd) publicKeyArray[lastIndex] = (lastByte or 128).toByte()
+        if (publicKeyPoint.isXOdd) publicKeyArray[lastIndex] = (lastByte or 128).toByte()
 
         val accessoryHKDF = HKDF.compute("HMACSHA512", sharedSecret, accessorySignSalt, accessorySignInfo, 32)
-
         val accessoryIdentifier = serverMAC.toByteArray()
-
         val accessoryInfo = accessoryHKDF + accessoryIdentifier + publicKeyArray
 
         signatureInstance.apply {
@@ -167,8 +164,7 @@ class PairSetup {
             TLVItem(TLVValue.PublicKey, *publicKeyArray),
             TLVItem(TLVValue.Signature, *signatureInstance.sign())
         )
-        val encodedPacket = subPacket.toByteArray()
-        val encodedSubPacket = ChaCha.encrypt(encodedPacket, encryptionHKDF, "PS-Msg06")
+        val encodedSubPacket = ChaCha.encrypt(subPacket.toByteArray(), encryptionHKDF, "PS-Msg06")
 
         val responsePacket = TLVPacket(
             TLVItem(TLVValue.State, 6),

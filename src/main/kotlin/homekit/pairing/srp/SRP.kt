@@ -47,16 +47,16 @@ class SRP {
 
     lateinit var sharedSecret: ByteArray
 
-    fun performFirstStep(password: String): BigInteger {
+    fun computePublicKey(password: String): BigInteger {
         val hashedCredentials = digest.hash(*identifier, ':'.toByte(), *password.toByteArray())
         val x = digest.hash(*salt, *hashedCredentials).asBigInteger
         verifier = generator.modPow(x, prime)
         privateKey = BigInteger(3072, secureRandom).mod(prime)
         publicKey = generator.modPow(privateKey, prime) + (multiplier.multiply(verifier)).mod(prime)
-        return if (publicKey.asByteArray.size == 384) publicKey else performFirstStep(password)
+        return if (publicKey.asByteArray.size == 384) publicKey else computePublicKey(password)
     }
 
-    fun performSecondStep(clientPublicKey: BigInteger, clientEvidence: BigInteger): BigInteger {
+    fun verifyDevice(clientPublicKey: BigInteger, clientEvidence: BigInteger): BigInteger {
         val paddedClientPublicKey = clientPublicKey padded 384
         val paddedPublicKey = publicKey padded 384
         val u = digest.hash(*paddedClientPublicKey, *paddedPublicKey).asBigInteger
