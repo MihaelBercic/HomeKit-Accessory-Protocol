@@ -20,11 +20,13 @@ import java.util.*
  * on 22/12/2020 at 13:44
  * using IntelliJ IDEA
  */
-class HomeKitService(name: String = "HomeKit") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
+
+val serverMAC = generateRandomMAC()
+
+class HomeKitService(name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
 
     private val recordName = "$name.$protocol"
     private val digest = MessageDigest.getInstance("SHA-512")
-    private val myMAC = generateRandomMAC() // TODO TAKE PERSISTENT FROM JSON
     private val answer = PTRRecord(protocol) { domain = recordName }
 
     override var onDiscovery: MulticastSocket.() -> Unit = { send(discoveryPacket.asDatagramPacket) }
@@ -37,21 +39,23 @@ class HomeKitService(name: String = "HomeKit") : MulticastService("_hap._tcp.loc
     private val addressRecord = ARecord("$name.local") { address = localhost.hostAddress }
 
     private val txtRecord = TXTRecord(recordName) {
-        put("id", myMAC)
+        put("id", serverMAC)
         put("sf", 1)
         put("c#", 1)
         put("s#", 1)
         put("ci", 1)
         put("ff", 0)
         put("md", name)
-        put("sh", Base64.getEncoder().encodeToString(digest.hash(*"1$myMAC".toByteArray())))
+        put("sh", Base64.getEncoder().encodeToString(digest.hash(*"1$serverMAC".toByteArray())))
     }
 
     private val discoveryPacket = Packet(Header(isResponse = true)).apply {
         answerRecords.add(answer)
-        additionalRecords.add(srvRecord)
-        additionalRecords.add(addressRecord)
-        additionalRecords.add(txtRecord)
+        additionalRecords.apply {
+            add(srvRecord)
+            add(addressRecord)
+            add(txtRecord)
+        }
     }
 
 }

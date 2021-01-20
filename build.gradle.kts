@@ -11,9 +11,10 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("org.slf4j:slf4j-nop:2.0.0-alpha1")
+    implementation("org.slf4j:slf4j-simple:2.0.0-alpha1")
     implementation("io.javalin:javalin:3.12.0")
-    implementation("at.favre.lib:hkdf:1.1.0")
-    implementation("net.i2p.crypto:eddsa:0.3.0")
+
+    // implementation("net.i2p.crypto:eddsa:0.3.0")
+    implementation("com.google.crypto.tink:tink:1.5.0")
 
 }

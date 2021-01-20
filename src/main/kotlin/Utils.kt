@@ -54,7 +54,7 @@ fun Int.bits(from: Int, count: Int): Int = (this shr from) and (2.0.pow(count) -
 
 
 // To be ignored. Is code simply for debugging
-val ByteArray.asString
+val ByteArray.asBinaryString
     get() = map { it.asString.padStart(8, '0') }.chunked(4).joinToString("\n\t") { it.joinToString(" ") }
 
 val ByteArray.asHexString

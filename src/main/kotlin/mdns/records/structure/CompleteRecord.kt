@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
  */
 interface CompleteRecord : IncompleteRecord {
 
-    val timeToLive: Int get() = 30
+    val timeToLive: Int get() = 15
     fun writeData(buffer: ByteBuffer) {}
     fun readData(buffer: ByteBuffer) {}
 

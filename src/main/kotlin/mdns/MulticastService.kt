@@ -11,9 +11,8 @@ import java.net.MulticastSocket
  */
 open class MulticastService(val protocol: String, val localhost: InetAddress) {
 
-    private val IPv4 = "224.0.0.251"
     private val mDNS = 5353
-    private val destination = InetAddress.getByName(IPv4)
+    private val destination = InetAddress.getByName("224.0.0.251")
 
     open var onDiscovery: MulticastSocket.() -> Unit = {}
 

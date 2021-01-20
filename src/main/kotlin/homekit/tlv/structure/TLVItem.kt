@@ -8,21 +8,25 @@ import kotlin.math.ceil
  * on 26/12/2020 at 01:19
  * using IntelliJ IDEA
  */
-interface Item {
+open class TLVItem(val identifier: TLVValue, vararg content: Byte = ByteArray(0)) {
 
-    val identifier: TLVValue
+    val data = content.toMutableList()
     val dataLength: Int get() = data.size
-    val data: MutableList<Byte>
     val totalLength: Int get() = dataLength + 2 * ceil(dataLength / 255.0).toInt()
+
+    fun appendData(dataToAppend: ByteArray) = data.addAll(dataToAppend.toTypedArray())
 
     val writeData: ByteBuffer.() -> Unit
         get() = {
             val type = identifier.typeValue
-            data.chunked(255).forEach { fragment ->
+            data.toList().chunked(255).forEach { fragment ->
                 put(type)
                 put(fragment.size.toByte())
                 put(fragment.toByteArray())
             }
         }
     val readData: ByteBuffer.() -> Unit get() = {}
+
+
+    override fun toString(): String = "$identifier [$dataLength]"
 }

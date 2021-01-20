@@ -8,15 +8,13 @@ import java.nio.ByteBuffer
  * on 26/12/2020 at 01:20
  * using IntelliJ IDEA
  */
-class Packet {
+class TLVPacket {
 
-    private val items: MutableList<Item> = mutableListOf()
+    private val items: MutableList<TLVItem> = mutableListOf()
 
-    fun find(predicate: (Item) -> Boolean) = items.firstOrNull(predicate)
+    operator fun get(tlvValue: TLVValue) = items.firstOrNull { it.identifier == tlvValue } ?: throw Exception("No $tlvValue in this packet.")
 
-    inline fun <reified T : Item> get(noinline predicate: (Item) -> Boolean = { it is T }) = find(predicate) as? T ?: throw Exception("TLV item ${T::class.java} not found")
-
-    constructor(vararg items: Item) {
+    constructor(vararg items: TLVItem) {
         this.items.addAll(items)
     }
 
