@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
  */
 class TLVPacket {
 
-    private val items: MutableList<TLVItem> = mutableListOf()
+    val items: MutableList<TLVItem> = mutableListOf()
 
     operator fun get(tlvValue: TLVValue) = items.firstOrNull { it.identifier == tlvValue } ?: throw Exception("No $tlvValue in this packet.")
 

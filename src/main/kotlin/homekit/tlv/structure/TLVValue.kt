@@ -5,7 +5,7 @@ package homekit.tlv.structure
  * on 24/12/2020 at 11:36
  * using IntelliJ IDEA
  */
-enum class TLVValue(val typeValue: Byte) {
+enum class TLVValue(val typeValue: Int) {
     Method(0),
     Identifier(1),
     Salt(2),
@@ -17,10 +17,12 @@ enum class TLVValue(val typeValue: Byte) {
     RetryDelay(8),
     Certificate(9),
     Signature(10),
+    Permissions(0x0B),
     Flags(19),
+    Separator(0xFF),
     None(-1);
 
     companion object {
-        fun valueOf(byte: Byte) = values().firstOrNull { it.typeValue == byte } ?: None
+        fun valueOf(byte: Byte) = values().firstOrNull { it.typeValue == byte.toInt() and 0xFF } ?: None
     }
 }

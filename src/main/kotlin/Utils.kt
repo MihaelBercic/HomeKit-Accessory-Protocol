@@ -1,3 +1,4 @@
+import java.io.File
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.security.MessageDigest
@@ -42,7 +43,7 @@ fun ByteBuffer.readEncodedLabel(): String {
     return String(characters.toByteArray())
 }
 
-fun generateRandomMAC(): String {
+fun generateMAC(): String {
     val random = Random()
     return (0 until 6).joinToString(":") { Integer.toHexString(random.nextInt(255) + 1).padStart(2, '0') }
 }
@@ -55,7 +56,7 @@ fun Int.bits(from: Int, count: Int): Int = (this shr from) and (2.0.pow(count) -
 
 // To be ignored. Is code simply for debugging
 val ByteArray.asBinaryString
-    get() = map { it.asString.padStart(8, '0') }.chunked(4).joinToString("\n\t") { it.joinToString(" ") }
+    get() = "\t" + map { it.asString.padStart(8, '0') }.chunked(4).joinToString("\n\t") { it.joinToString(" ") }
 
 val ByteArray.asHexString
     get() = toList()
@@ -100,3 +101,8 @@ val BigInteger.asByteArray: ByteArray
         assert(signum() != -1)
         if (it[0].toInt().and(255) == 0) it.copyOfRange(1, it.size) else it
     }
+
+inline fun <reified T> readOrCompute(name: String, block: () -> T) = File(name).let {
+    if (it.exists()) gson.fromJson(it.readText(), T::class.java)
+    else block.invoke()
+}

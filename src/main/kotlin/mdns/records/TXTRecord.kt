@@ -24,7 +24,7 @@ class TXTRecord(override val label: String, block: MutableMap<Any, Any>.() -> Un
         dataMap.forEach { (key, value) ->
             val string = "$key=$value"
             val length = string.length
-            buffer.put(length.toByte())
+            buffer.put((length and 255).toByte())
             buffer.put(string.toByteArray())
         }
     }

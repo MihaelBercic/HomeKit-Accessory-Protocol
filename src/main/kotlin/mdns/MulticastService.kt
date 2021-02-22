@@ -1,8 +1,8 @@
 package mdns
 
-import java.net.DatagramPacket
-import java.net.InetAddress
-import java.net.MulticastSocket
+import Logger
+import java.net.*
+
 
 /**
  * Created by Mihael Valentin Berčič
@@ -13,21 +13,24 @@ open class MulticastService(val protocol: String, val localhost: InetAddress) {
 
     private val mDNS = 5353
     private val destination = InetAddress.getByName("224.0.0.251")
-
+    private val inetSocketAddress = InetSocketAddress(destination, mDNS)
+    private val myNetworkInterface = NetworkInterface.getByInetAddress(localhost)
     open var onDiscovery: MulticastSocket.() -> Unit = {}
+    open var responseCondition: Packet.() -> Boolean = {
+        queryRecords.any { it.label.contains(protocol) } && answerRecords.none { it.label.contains(protocol) }
+    }
 
-    fun startAdvertising(duration: Int) {
-        println("Starting service advertising!")
+    fun startAdvertising() {
+        Logger.info("Starting service advertising!")
         MulticastSocket(mDNS).apply {
-            joinGroup(destination)
+            joinGroup(inetSocketAddress, myNetworkInterface)
+            apply(onDiscovery)
             Thread {
-                val start = System.currentTimeMillis()
                 val byteArray = ByteArray(9000)
                 val datagramPacket = DatagramPacket(byteArray, byteArray.size)
-                while (System.currentTimeMillis() - duration < start) {
+                while (true) {
                     receive(datagramPacket)
-                    val packet = datagramPacket.asPacket
-                    if (datagramPacket.address != localhost && packet.queryRecords.any { it.label.contains(protocol) }) apply(onDiscovery)
+                    if (responseCondition(datagramPacket.asPacket)) apply(onDiscovery)
                 }
                 close()
             }.start()

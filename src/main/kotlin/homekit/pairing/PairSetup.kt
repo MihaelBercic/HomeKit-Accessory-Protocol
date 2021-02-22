@@ -2,22 +2,19 @@ package homekit.pairing
 
 import asBigInteger
 import asByteArray
+import homekit.Constants
+import homekit.Settings
+import homekit.communication.HttpResponse
+import homekit.communication.Session
+import homekit.communication.structure.data.Pairing
+import homekit.communication.structure.data.PairingStorage
 import homekit.pairing.encryption.ChaCha
+import homekit.pairing.encryption.Ed25519
 import homekit.pairing.encryption.HKDF
-import homekit.pairing.srp.SRP
-import homekit.serverMAC
 import homekit.tlv.structure.TLVItem
 import homekit.tlv.structure.TLVPacket
 import homekit.tlv.structure.TLVValue
-import io.javalin.http.Context
 import java.nio.ByteBuffer
-import java.security.KeyFactory
-import java.security.KeyPairGenerator
-import java.security.Signature
-import java.security.interfaces.EdECPublicKey
-import java.security.spec.EdECPoint
-import java.security.spec.EdECPublicKeySpec
-import java.security.spec.NamedParameterSpec
 import java.util.*
 
 
@@ -26,41 +23,30 @@ import java.util.*
  * on 28/12/2020 at 13:38
  * using IntelliJ IDEA
  */
-class PairSetup {
+object PairSetup {
 
-    private val srp = SRP()
+    private val contentType = "application/pairing+tlv8"
 
-    private var currentState: Int = 1
 
-    private val encryptionSalt = "Pair-Setup-Encrypt-Salt".toByteArray()
-    private val encryptionInfo = "Pair-Setup-Encrypt-Info".toByteArray()
-
-    private val controllerSalt = "Pair-Setup-Controller-Sign-Salt".toByteArray()
-    private val controllerInfo = "Pair-Setup-Controller-Sign-Info".toByteArray()
-
-    private val accessorySignSalt = "Pair-Setup-Accessory-Sign-Salt".toByteArray()
-    private val accessorySignInfo = "Pair-Setup-Accessory-Sign-Info".toByteArray()
-
-    fun handleRequest(context: Context) {
-        context.header("Content-Type", "application/pairing+tlv8")
-        val packet = TLVPacket(context.bodyAsBytes())
-
+    fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): HttpResponse {
+        val packet = TLVPacket(data)
         val stateItem = packet[TLVValue.State]
         val requestedValue = stateItem.dataList[0].toInt()
 
-        println("Current state: $currentState vs. $requestedValue")
-        if (requestedValue != currentState) return
+        if (requestedValue != session.currentState) throw Exception("Incorrect pair setup state.")
 
-        when (requestedValue) {
-            1 -> computeStartingInformation(context)
-            3 -> verifyDeviceProof(context, packet)
-            5 -> decryptPublicInformation(context, packet)
+        return when (requestedValue) {
+            1 -> computeStartingInformation(session)
+            3 -> verifyDeviceProof(session, packet)
+            5 -> decryptPublicInformation(settings, pairings, session, packet[TLVValue.EncryptedData])
+            else -> HttpResponse(204, contentType)
         }
 
     }
 
-    private fun computeStartingInformation(context: Context) {
-        val password = "111-11-111".apply { println("Pin: $this") }
+    private fun computeStartingInformation(session: Session): HttpResponse {
+        val password = "111-11-111".apply { Logger.info("Pin: $this") }
+        val srp = session.srp
         val publicKey = srp.computePublicKey(password)
 
         val responsePacket = TLVPacket(
@@ -68,13 +54,14 @@ class PairSetup {
             TLVItem(TLVValue.Salt, *srp.salt),
             TLVItem(TLVValue.PublicKey, *publicKey.asByteArray)
         )
-        currentState = 3
-        context.result(responsePacket.toByteArray())
+        session.currentState = 3
+        return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
     }
 
-    private fun verifyDeviceProof(context: Context, packet: TLVPacket) {
+    private fun verifyDeviceProof(session: Session, packet: TLVPacket): HttpResponse {
         val clientPublicKeyItem = packet[TLVValue.PublicKey]
         val clientEvidenceItem = packet[TLVValue.Proof]
+        val srp = session.srp
 
         val clientKey = clientPublicKeyItem.dataArray.asBigInteger
         val clientEvidence = clientEvidenceItem.dataArray.asBigInteger
@@ -84,15 +71,15 @@ class PairSetup {
             TLVItem(TLVValue.State, 4),
             TLVItem(TLVValue.Proof, *evidence.asByteArray)
         )
-        currentState = 5
-        context.result(responsePacket.toByteArray())
+        session.currentState = 5
+        return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
     }
 
-    private fun decryptPublicInformation(context: Context, packet: TLVPacket) {
-        val deviceEncryptedItem = packet[TLVValue.EncryptedData]
-        val encryptedData = deviceEncryptedItem.dataArray
+    private fun decryptPublicInformation(settings: Settings, pairings: PairingStorage, session: Session, encryptedItem: TLVItem): HttpResponse {
+        val encryptedData = encryptedItem.dataArray
+        val srp = session.srp
         val sharedSecret = srp.sharedSecret
-        val encryptionHKDF = HKDF.compute("HMACSHA512", sharedSecret, encryptionSalt, encryptionInfo, 32)
+        val encryptionHKDF = HKDF.compute("HMACSHA512", sharedSecret, Constants.encryptionSalt, Constants.encryptionInfo, 32)
 
         val cipherBuffer = ByteBuffer.allocate(12 + encryptedData.size).apply {
             position(4)
@@ -103,76 +90,50 @@ class PairSetup {
         val decryptedData = ChaCha.decrypt(cipherBuffer.array(), encryptionHKDF)
 
         val parsedPacket = TLVPacket(decryptedData)
-        val identifierItem = parsedPacket[TLVValue.Identifier]
-        val publicKeyItem = parsedPacket[TLVValue.PublicKey]
-        val signatureItem = parsedPacket[TLVValue.Signature]
+        val devicePublicKey = parsedPacket[TLVValue.PublicKey].dataArray
+        val deviceSignature = parsedPacket[TLVValue.Signature].dataArray
+        val deviceIdentifier = parsedPacket[TLVValue.Identifier].dataArray
 
-        val devicePublicKey = publicKeyItem.dataArray
-        val deviceSignature = signatureItem.dataArray
-        val deviceIdentifier = identifierItem.dataArray
-
-        val controllerHKDF = HKDF.compute("HMACSHA512", sharedSecret, controllerSalt, controllerInfo, 32)
+        val controllerHKDF = HKDF.compute("HMACSHA512", sharedSecret, Constants.controllerSalt, Constants.controllerInfo, 32)
 
         val deviceInfo = controllerHKDF + deviceIdentifier + devicePublicKey
 
-        val deviceLastIndex = devicePublicKey.lastIndex
-        val deviceLastByte = devicePublicKey[deviceLastIndex]
-        val deviceLastBytesInt = deviceLastByte.toInt()
+        val deviceEdPublicKey = Ed25519.parsePublicKey(devicePublicKey)
+        val isVerified = Ed25519.verifySignature(deviceEdPublicKey, deviceInfo, deviceSignature)
+        if (!isVerified) throw Exception("Signature not verified...")
 
-        devicePublicKey[deviceLastIndex] = (deviceLastBytesInt and 127).toByte()
-
-        val isDeviceXOdd = deviceLastBytesInt.and(255).shr(7) == 1
-        val devicePublicY = devicePublicKey.reversedArray().asBigInteger
-
-        val keyFactory = KeyFactory.getInstance("Ed25519")
-        val nameSpec = NamedParameterSpec.ED25519
-        val point = EdECPoint(isDeviceXOdd, devicePublicY)
-        val keySpec = EdECPublicKeySpec(nameSpec, point)
-        val key = keyFactory.generatePublic(keySpec)
-
-        val signatureInstance = Signature.getInstance("Ed25519")
-        signatureInstance.apply {
-            initVerify(key)
-            update(deviceInfo)
-            if (!verify(deviceSignature)) return // TODO respond with TLV Error
+        val accessoryKeyPair = Ed25519.generateKeyPair().apply {
+            Ed25519.storePrivateKey("communication/ed25519-private", private)
+            Ed25519.storePublicKey("communication/ed25519-public", public)
         }
 
-        val keyPairGenerator = KeyPairGenerator.getInstance("Ed25519")
-        val keyPair = keyPairGenerator.generateKeyPair()
-        val privateKey = keyPair.private
-        val publicKey = keyPair.public as EdECPublicKey
-        // TODO store key pair
+        val encodedPublicKey = Ed25519.encode(accessoryKeyPair.public)
 
-        val publicKeyPoint = publicKey.point
-        val publicKeyArray = publicKeyPoint.y.asByteArray.reversedArray()
-
-        val lastIndex = publicKeyArray.lastIndex
-        val lastByte = publicKeyArray[lastIndex].toInt()
-        if (publicKeyPoint.isXOdd) publicKeyArray[lastIndex] = (lastByte or 128).toByte()
-
-        val accessoryHKDF = HKDF.compute("HMACSHA512", sharedSecret, accessorySignSalt, accessorySignInfo, 32)
-        val accessoryIdentifier = serverMAC.toByteArray()
-        val accessoryInfo = accessoryHKDF + accessoryIdentifier + publicKeyArray
-
-        signatureInstance.apply {
-            initSign(privateKey)
-            update(accessoryInfo)
-        }
+        val accessoryHKDF = HKDF.compute("HMACSHA512", sharedSecret, Constants.accessorySignSalt, Constants.accessorySignInfo, 32)
+        val accessoryIdentifier = settings.serverMAC.toByteArray()
+        val accessoryInfo = accessoryHKDF + accessoryIdentifier + encodedPublicKey
 
         val subPacket = TLVPacket(
             TLVItem(TLVValue.Identifier, *accessoryIdentifier),
-            TLVItem(TLVValue.PublicKey, *publicKeyArray),
-            TLVItem(TLVValue.Signature, *signatureInstance.sign())
+            TLVItem(TLVValue.PublicKey, *encodedPublicKey),
+            TLVItem(TLVValue.Signature, *Ed25519.sign(accessoryKeyPair.private, accessoryInfo))
         )
-        val encodedSubPacket = ChaCha.encrypt(subPacket.toByteArray(), encryptionHKDF, "PS-Msg06")
+        val subPacketArray = subPacket.toByteArray()
+        val encryptionBuffer = ByteBuffer.allocate(12 + subPacketArray.size).apply {
+            position(4)
+            put("PS-Msg06".toByteArray())
+            put(subPacketArray)
+        }
+        val encodedSubPacket = ChaCha.encrypt(encryptionBuffer.array(), encryptionHKDF)
 
         val responsePacket = TLVPacket(
             TLVItem(TLVValue.State, 6),
             TLVItem(TLVValue.EncryptedData, *encodedSubPacket)
         )
 
-        println("Responding to the request!")
-        context.result(responsePacket.toByteArray())
+        val controllerIdentifier = String(deviceIdentifier)
+        pairings.addPairing(Pairing(controllerIdentifier, Ed25519.encode(deviceEdPublicKey), true))
+        return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
     }
 
     private fun generatePin(): String {

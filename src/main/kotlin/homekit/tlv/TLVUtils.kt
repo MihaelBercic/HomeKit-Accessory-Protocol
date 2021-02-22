@@ -2,6 +2,7 @@ package homekit.tlv
 
 import homekit.tlv.structure.TLVItem
 import homekit.tlv.structure.TLVValue
+import java.lang.Exception
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -23,12 +24,12 @@ fun parseTLV(byteArray: ByteArray): List<TLVItem> {
         val dataArray = ByteArray(length)
         byteBuffer[dataArray]
 
-        if (previous?.identifier == type) previous.appendData(dataArray).apply { println("Added fragmented data!") }
+        if (previous?.identifier == type) previous.appendData(dataArray)
         else TLVItem(type, *dataArray).apply {
             items.add(0, this)
             previous = this
         }
     }
-    println("Remaining: " + byteBuffer.remaining())
+    if(byteBuffer.remaining() != 0) throw Exception("Byte buffer has something more to read!")
     return items
 }

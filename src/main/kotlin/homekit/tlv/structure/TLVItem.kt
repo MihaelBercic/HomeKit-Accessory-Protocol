@@ -19,7 +19,7 @@ open class TLVItem(val identifier: TLVValue, vararg content: Byte = ByteArray(0)
 
     val writeData: ByteBuffer.() -> Unit
         get() = {
-            val type = identifier.typeValue
+            val type = identifier.typeValue.toByte()
             dataList.toList().chunked(255).forEach { fragment ->
                 put(type)
                 put(fragment.size.toByte())

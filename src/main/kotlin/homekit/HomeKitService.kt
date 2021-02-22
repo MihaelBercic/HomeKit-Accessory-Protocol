@@ -1,7 +1,7 @@
 package homekit
 
-import generateRandomMAC
-import hash
+import Logger
+import homekit.communication.structure.data.PairingStorage
 import mdns.Header
 import mdns.MulticastService
 import mdns.Packet
@@ -21,35 +21,44 @@ import java.util.*
  * using IntelliJ IDEA
  */
 
-val serverMAC = generateRandomMAC()
+class HomeKitService(settings: Settings, port: Int, name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
 
-class HomeKitService(name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
+    init {
+        Logger.trace(localhost)
+    }
 
     private val recordName = "$name.$protocol"
     private val digest = MessageDigest.getInstance("SHA-512")
     private val answer = PTRRecord(protocol) { domain = recordName }
 
-    override var onDiscovery: MulticastSocket.() -> Unit = { send(discoveryPacket.asDatagramPacket) }
+    override var onDiscovery: MulticastSocket.() -> Unit = {
+        send(packet.asDatagramPacket)
+        Logger.debug("Responding to discovery!")
+    }
+
 
     private val srvRecord = SRVRecord(recordName) {
-        port = 3000
+        this.port = port
         target = "$name.local"
     }
 
     private val addressRecord = ARecord("$name.local") { address = localhost.hostAddress }
 
     private val txtRecord = TXTRecord(recordName) {
-        put("id", serverMAC)
+        val encoder = Base64.getEncoder()
+        put("id", settings.serverMAC)
+        put("c#", settings.configurationNumber)
         put("sf", 1)
-        put("c#", 1)
-        put("s#", 1)
-        put("ci", 1)
+        put("pv", "1.1")
+        put("s#", "1")
+        put("ci", 2)
         put("ff", 0)
         put("md", name)
-        put("sh", Base64.getEncoder().encodeToString(digest.hash(*"1$serverMAC".toByteArray())))
+        // put("sh", encoder.encodeToString(digest.hash(*"1${settings.serverMAC}".toByteArray())))
     }
 
-    private val discoveryPacket = Packet(Header(isResponse = true)).apply {
+
+    private val packet = Packet(Header(isResponse = true)).apply {
         answerRecords.add(answer)
         additionalRecords.apply {
             add(srvRecord)

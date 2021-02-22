@@ -14,28 +14,25 @@ import javax.crypto.spec.SecretKeySpec
 
 object ChaCha {
 
-    private val algorithm = "ChaCha20-Poly1305"
-    private val nonceLength = 12
+    private const val algorithm = "ChaCha20-Poly1305"
+    private const val nonceLength = 12
 
-    fun encrypt(data: ByteArray, key: ByteArray, nonce: String): ByteArray {
-        val buffer = ByteBuffer.allocate(nonceLength).apply {
-            position(4)
-            put(nonce.toByteArray())
+    fun encrypt(toEncode: ByteArray, key: ByteArray, aad: ByteArray = ByteArray(0)): ByteArray {
+        val buffer = ByteBuffer.wrap(toEncode)
+        val nonce = ByteArray(nonceLength)
+        val data = ByteArray(buffer.remaining() - nonceLength)
+        buffer[nonce][data]
+
+        val cipher = Cipher.getInstance(algorithm).apply {
+            init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "ChaCha20-Poly1305"), IvParameterSpec(nonce))
+            if (aad.isNotEmpty()) updateAAD(aad)
         }
-        val paddedNonce = buffer.array()
-        val iv = IvParameterSpec(paddedNonce)
-        val secretKey = SecretKeySpec(key, "ChaCha20-Poly1305")
-        val cipher = Cipher.getInstance(algorithm)
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
-
-
-        val encryptedText = cipher.doFinal(data)
 
         // TODO can't possibly be correct. Has to be (nonce || actual_ciphertext || tag)
-        return encryptedText
+        return cipher.doFinal(data)
     }
 
-    fun decrypt(encryptedData: ByteArray, key: ByteArray): ByteArray {
+    fun decrypt(encryptedData: ByteArray, key: ByteArray, aad: ByteArray = ByteArray(0)): ByteArray {
         val secretKey = SecretKeySpec(key, algorithm)
         val encryptedText = ByteArray(encryptedData.size - nonceLength)
         val nonce = ByteArray(nonceLength)
@@ -48,6 +45,7 @@ object ChaCha {
         val iv = IvParameterSpec(nonce)
         return Cipher.getInstance(algorithm).let {
             it.init(Cipher.DECRYPT_MODE, secretKey, iv)
+            if (aad.isNotEmpty()) it.updateAAD(aad)
             it.doFinal(encryptedText)
         }
     }
