@@ -10,3 +10,5 @@ settings.gradle.kts
 gradle/
 src/main/java/org/
 out/
+communication/
+

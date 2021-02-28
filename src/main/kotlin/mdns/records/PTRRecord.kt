@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
  */
 
 
-class PTRRecord(override var label: String, block: PTRRecord.() -> Unit = {}) : CompleteRecord {
+class PTRRecord(override var label: String, block: PTRRecord.() -> Unit = {}) : CompleteRecord() {
 
     init {
         apply(block)
@@ -19,7 +19,6 @@ class PTRRecord(override var label: String, block: PTRRecord.() -> Unit = {}) : 
 
     lateinit var domain: String
 
-    override val hasProperty = false
     override val type = RecordType.PTR
 
     override fun writeData(buffer: ByteBuffer) {

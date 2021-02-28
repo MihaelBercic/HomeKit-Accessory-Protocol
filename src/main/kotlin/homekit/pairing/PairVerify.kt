@@ -3,11 +3,13 @@ package homekit.pairing
 import asByteArray
 import homekit.Settings
 import homekit.communication.HttpResponse
+import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.PairingStorage
 import homekit.pairing.encryption.ChaCha
 import homekit.pairing.encryption.Curve25519
 import homekit.pairing.encryption.Ed25519
+import homekit.tlv.structure.TLVError
 import homekit.tlv.structure.TLVItem
 import homekit.tlv.structure.TLVPacket
 import homekit.tlv.structure.TLVValue
@@ -24,7 +26,7 @@ object PairVerify {
 
     private const val contentType = "application/pairing+tlv8"
 
-    fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): HttpResponse {
+    fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): Response {
         val tlvPacket = TLVPacket(data)
         val stateItem = tlvPacket[TLVValue.State]
         val requestedState = stateItem.dataList[0].toInt()
@@ -75,7 +77,7 @@ object PairVerify {
         return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
     }
 
-    private fun verifyDeviceInformation(pairings: PairingStorage, session: Session, encryptedItem: TLVItem): HttpResponse {
+    private fun verifyDeviceInformation(pairings: PairingStorage, session: Session, encryptedItem: TLVItem): Response {
         val encryptedData = encryptedItem.dataArray
         val dataBuffer = ByteBuffer.allocate(12 + encryptedData.size).apply {
             position(4)
@@ -86,7 +88,7 @@ object PairVerify {
         val parsedPacket = TLVPacket(decoded)
         val controllerIdentifier = String(parsedPacket[TLVValue.Identifier].dataArray)
 
-        val pairing = pairings.findPairing(controllerIdentifier) ?: throw java.lang.Exception("Invalid pairing!")
+        val pairing = pairings.findPairing(controllerIdentifier) ?: return TLVErrorResponse(4, TLVError.Authentication)
         session.apply {
             currentState = 1
             isSecure = true

@@ -9,15 +9,15 @@ import java.nio.ByteBuffer
  * on 22/12/2020 at 13:14
  * using IntelliJ IDEA
  */
-class ARecord(override val label: String, block: ARecord.() -> Unit) : CompleteRecord {
+class ARecord(override val label: String, block: ARecord.() -> Unit = {}) : CompleteRecord() {
 
     lateinit var address: String
     override val type: RecordType = RecordType.A
-    override val hasProperty: Boolean = true
 
     init {
         apply(block)
     }
+
 
     override fun writeData(buffer: ByteBuffer) {
         val split = address.split(".")

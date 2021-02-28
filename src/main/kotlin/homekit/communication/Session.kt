@@ -18,9 +18,10 @@ import java.nio.ByteOrder
  * using IntelliJ IDEA
  */
 
-class Session(socket: Socket, homeKitServer: HomeKitServer) {
+class Session(private val socket: Socket, private val homeKitServer: HomeKitServer) {
 
     var isSecure = false
+    var shouldClose = false
     val srp = SRP()
     var currentState: Int = 1
     private var controllerToAccessoryCount: Long = 0
@@ -36,13 +37,10 @@ class Session(socket: Socket, homeKitServer: HomeKitServer) {
     private val outputStream = socket.getOutputStream()
 
     init {
-        while (true) {
+        while (!shouldClose) {
             val aad = inputStream.readNBytes(2)
             if (aad.isEmpty()) {
-                Logger.error("Input stream has let us know it is closed. Shutting this session down.")
-                inputStream.close()
-                outputStream.close()
-                socket.close()
+                close()
                 break
             }
             val shouldEncrypt = isSecure
@@ -65,22 +63,38 @@ class Session(socket: Socket, homeKitServer: HomeKitServer) {
                 HttpRequest(headers, decryptedContent.takeLast(headers.contentLength).toByteArray())
             }
 
-            Logger.info(request.headers)
-            sendMessage(homeKitServer.handle(request, this), shouldEncrypt)
+            request.headers.apply {
+                Logger.trace("${Logger.green}${socket.remoteSocketAddress}${Logger.reset} [${Logger.red}$httpMethod${Logger.reset}] $path ${Logger.magenta}$query${Logger.reset} ${String(request.content)}")
+            }
+            homeKitServer.handle(request, this)?.apply { sendMessage(this, shouldEncrypt) }
+            if (shouldClose) close()
         }
     }
 
+    private fun close() {
+        Logger.error("Input stream has let us know it is closed. Shutting this session down.")
+        homeKitServer.liveSessions.remove(this)
+        inputStream.close()
+        outputStream.close()
+        socket.close()
+    }
+
     fun sendMessage(response: Response, encrypt: Boolean = true) {
-        val bytesToWrite = if (!encrypt) response.data else encodeIntoFrames(response)
-        outputStream.apply {
-            write(bytesToWrite)
-            flush()
-            if (encrypt) Logger.info("Response: ${String(response.data).dropWhile { it != '{' }}")
+        try {
+            outputStream.apply {
+                write(if (!encrypt) response.data else encodeIntoFrames(response))
+                flush()
+                // if (encrypt) Logger.info("Response: ${String(response.data).dropWhile { it != '{' }}")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            close()
         }
     }
 
     fun setSharedSecret(sharedSecret: ByteArray) {
         this.sharedSecret = sharedSecret
+        homeKitServer.liveSessions.add(this)
         controllerToAccessoryCount = 0
         accessoryToControllerCount = 0
         Constants.apply {

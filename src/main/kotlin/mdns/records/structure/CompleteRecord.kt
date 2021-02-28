@@ -7,15 +7,16 @@ import java.nio.ByteBuffer
  * on 20/12/2020 at 22:45
  * using IntelliJ IDEA
  */
-interface CompleteRecord : IncompleteRecord {
+abstract class CompleteRecord : IncompleteRecord() {
 
-    val timeToLive: Int get() = 300
-    fun writeData(buffer: ByteBuffer) {}
-    fun readData(buffer: ByteBuffer) {}
+    var timeToLive: Int = 4500
+    open fun writeData(buffer: ByteBuffer) {}
+    open fun readData(buffer: ByteBuffer) {}
 
     override fun writeTo(byteBuffer: ByteBuffer) {
         super.writeTo(byteBuffer)
         byteBuffer.putInt(timeToLive)
         writeData(byteBuffer)
     }
+
 }

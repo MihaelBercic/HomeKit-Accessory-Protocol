@@ -5,12 +5,14 @@ import asByteArray
 import homekit.Constants
 import homekit.Settings
 import homekit.communication.HttpResponse
+import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.Pairing
 import homekit.communication.structure.data.PairingStorage
 import homekit.pairing.encryption.ChaCha
 import homekit.pairing.encryption.Ed25519
 import homekit.pairing.encryption.HKDF
+import homekit.tlv.structure.TLVError
 import homekit.tlv.structure.TLVItem
 import homekit.tlv.structure.TLVPacket
 import homekit.tlv.structure.TLVValue
@@ -28,7 +30,7 @@ object PairSetup {
     private val contentType = "application/pairing+tlv8"
 
 
-    fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): HttpResponse {
+    fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): Response {
         val packet = TLVPacket(data)
         val stateItem = packet[TLVValue.State]
         val requestedValue = stateItem.dataList[0].toInt()
@@ -36,7 +38,7 @@ object PairSetup {
         if (requestedValue != session.currentState) throw Exception("Incorrect pair setup state.")
 
         return when (requestedValue) {
-            1 -> computeStartingInformation(session)
+            1 -> computeStartingInformation(session, packet)
             3 -> verifyDeviceProof(session, packet)
             5 -> decryptPublicInformation(settings, pairings, session, packet[TLVValue.EncryptedData])
             else -> HttpResponse(204, contentType)
@@ -44,7 +46,7 @@ object PairSetup {
 
     }
 
-    private fun computeStartingInformation(session: Session): HttpResponse {
+    private fun computeStartingInformation(session: Session, packet: TLVPacket): HttpResponse {
         val password = "111-11-111".apply { Logger.info("Pin: $this") }
         val srp = session.srp
         val publicKey = srp.computePublicKey(password)
@@ -58,7 +60,7 @@ object PairSetup {
         return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
     }
 
-    private fun verifyDeviceProof(session: Session, packet: TLVPacket): HttpResponse {
+    private fun verifyDeviceProof(session: Session, packet: TLVPacket): Response {
         val clientPublicKeyItem = packet[TLVValue.PublicKey]
         val clientEvidenceItem = packet[TLVValue.Proof]
         val srp = session.srp
@@ -72,6 +74,7 @@ object PairSetup {
             TLVItem(TLVValue.Proof, *evidence.asByteArray)
         )
         session.currentState = 5
+        Logger.trace("Responding with response packet!")
         return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
     }
 

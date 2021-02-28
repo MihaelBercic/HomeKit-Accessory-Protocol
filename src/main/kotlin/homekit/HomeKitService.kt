@@ -1,7 +1,6 @@
 package homekit
 
 import Logger
-import homekit.communication.structure.data.PairingStorage
 import mdns.Header
 import mdns.MulticastService
 import mdns.Packet
@@ -10,10 +9,12 @@ import mdns.records.ARecord
 import mdns.records.PTRRecord
 import mdns.records.SRVRecord
 import mdns.records.TXTRecord
+import mdns.records.structure.RecordType
+import java.lang.Thread.sleep
+import java.net.DatagramPacket
 import java.net.InetAddress
 import java.net.MulticastSocket
-import java.security.MessageDigest
-import java.util.*
+import kotlin.random.Random
 
 /**
  * Created by Mihael Valentin Berčič
@@ -28,14 +29,39 @@ class HomeKitService(settings: Settings, port: Int, name: String = "HomeServer")
     }
 
     private val recordName = "$name.$protocol"
-    private val digest = MessageDigest.getInstance("SHA-512")
-    private val answer = PTRRecord(protocol) { domain = recordName }
+    private val tcpAnswer = PTRRecord(protocol) { domain = recordName }
+    private val udpAnswer = PTRRecord("_hap._udp.local") { domain = recordName }
 
-    override var onDiscovery: MulticastSocket.() -> Unit = {
-        send(packet.asDatagramPacket)
-        Logger.debug("Responding to discovery!")
+    override var responseCondition: Packet.() -> Boolean = {
+        !header.isResponse
+                && queryRecords.any { it.label == protocol || it.label == recordName }
+                && answerRecords.none { it.label == protocol || it.label == recordName || it.label == "$name.local" }
     }
 
+    override var respondWith: (MulticastSocket, DatagramPacket, Packet) -> Unit = { socket, datagramPacket, packet ->
+        val desiredQueries = packet.queryRecords.filter { it.label == protocol || it.label == recordName }
+        Logger.info("[${datagramPacket.socketAddress}] is asking for ${desiredQueries.map { "[${if (it.hasProperty) "Unicast" else "Multicast"}] ${it.label}" }} with answers ${packet.answerRecords.map { "${it.type} ${it.label}" }}")
+        val includePointer = desiredQueries.any { it.type == RecordType.PTR }
+        val includeTXT = desiredQueries.any { it.type == RecordType.TXT }
+        val includeSRV = desiredQueries.any { it.type == RecordType.SRV }
+        val isUnicast = desiredQueries.any { it.hasProperty }
+        val respondingPacket = Packet(Header(isResponse = true)).apply {
+            if (includePointer) {
+                answerRecords.add(tcpAnswer)
+                additionalRecords.apply {
+                    add(srvRecord)
+                    add(addressRecord)
+                    add(txtRecord)
+                }
+            }
+            if (includeTXT) answerRecords.add(txtRecord)
+            if (includeSRV) answerRecords.add(srvRecord)
+        }
+        val newDatagramPacket = respondingPacket.asDatagramPacket
+        datagramPacket.data = newDatagramPacket.data
+        if (!isUnicast) sleep(Random.nextLong(100, 300))
+        socket.send(if (isUnicast) datagramPacket else newDatagramPacket)
+    }
 
     private val srvRecord = SRVRecord(recordName) {
         this.port = port
@@ -45,26 +71,24 @@ class HomeKitService(settings: Settings, port: Int, name: String = "HomeServer")
     private val addressRecord = ARecord("$name.local") { address = localhost.hostAddress }
 
     private val txtRecord = TXTRecord(recordName) {
-        val encoder = Base64.getEncoder()
-        put("id", settings.serverMAC)
         put("c#", settings.configurationNumber)
-        put("sf", 1)
+        put("id", settings.serverMAC)
+        put("md", name)
         put("pv", "1.1")
         put("s#", "1")
+        put("sf", 0x00)
         put("ci", 2)
-        put("ff", 0)
-        put("md", name)
-        // put("sh", encoder.encodeToString(digest.hash(*"1${settings.serverMAC}".toByteArray())))
     }
 
 
-    private val packet = Packet(Header(isResponse = true)).apply {
-        answerRecords.add(answer)
+    override val wakeUpPacket: Packet = Packet(Header(isResponse = false)).apply {
+        answerRecords.add(tcpAnswer)
         additionalRecords.apply {
             add(srvRecord)
             add(addressRecord)
             add(txtRecord)
         }
     }
+
 
 }

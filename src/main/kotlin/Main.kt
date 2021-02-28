@@ -2,8 +2,6 @@ import com.google.gson.GsonBuilder
 import homekit.HomeKitServer
 import homekit.HomeKitService
 import homekit.Settings
-import homekit.communication.structure.CharacteristicType
-import homekit.communication.structure.data.PairingStorage
 
 
 /**
@@ -17,6 +15,7 @@ val gson = GsonBuilder()
     //.serializeNulls()
     .create()
 
+
 fun main() {
     try {
         val settings = readOrCompute("settings.json") { Settings(0, 3000, generateMAC()) }
@@ -28,10 +27,4 @@ fun main() {
         e.printStackTrace()
         Logger.error("An error occured...")
     }
-
-}
-
-
-fun <T> has(type: CharacteristicType, value: Any? = type.defaultValue, block: (oldValue: T?, newValue: T?) -> Unit = { _, _ -> }) {
-
 }

@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
  */
 
 
-class SRVRecord(override val label: String, block: SRVRecord.() -> Unit = {}) : CompleteRecord {
+class SRVRecord(override val label: String, block: SRVRecord.() -> Unit = {}) : CompleteRecord() {
 
     var port: Int = 0
     private var priority: Int = 0

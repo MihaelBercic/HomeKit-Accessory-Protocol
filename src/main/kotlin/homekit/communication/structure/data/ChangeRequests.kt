@@ -13,9 +13,9 @@ data class ChangeRequest(
     val iid: Int,
     val value: Any?,
     val authData: String?,
-    val remote: Boolean = false,
-    @SerializedName("ev") val events: Boolean = false,
-    @SerializedName("r") val response: Boolean = false
+    val remote: Boolean?,
+    @SerializedName("ev") val events: Boolean?,
+    @SerializedName("r") val response: Boolean?
 )
 
 data class ChangeRequests(val characteristics: List<ChangeRequest>)

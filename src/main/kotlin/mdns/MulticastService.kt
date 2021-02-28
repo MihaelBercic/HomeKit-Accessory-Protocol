@@ -9,28 +9,35 @@ import java.net.*
  * on 21/12/2020 at 13:42
  * using IntelliJ IDEA
  */
-open class MulticastService(val protocol: String, val localhost: InetAddress) {
+abstract class MulticastService(val protocol: String, val localhost: InetAddress) {
 
     private val mDNS = 5353
     private val destination = InetAddress.getByName("224.0.0.251")
     private val inetSocketAddress = InetSocketAddress(destination, mDNS)
     private val myNetworkInterface = NetworkInterface.getByInetAddress(localhost)
-    open var onDiscovery: MulticastSocket.() -> Unit = {}
-    open var responseCondition: Packet.() -> Boolean = {
-        queryRecords.any { it.label.contains(protocol) } && answerRecords.none { it.label.contains(protocol) }
-    }
+
+    open var responseCondition: Packet.() -> Boolean = { false }
+    abstract var respondWith: (socket: MulticastSocket, receivedPacket: DatagramPacket, asPacket: Packet) -> Unit
+
+    open val wakeUpPacket: Packet? = null
 
     fun startAdvertising() {
         Logger.info("Starting service advertising!")
         MulticastSocket(mDNS).apply {
+            timeToLive = 255
             joinGroup(inetSocketAddress, myNetworkInterface)
-            apply(onDiscovery)
+
             Thread {
                 val byteArray = ByteArray(9000)
                 val datagramPacket = DatagramPacket(byteArray, byteArray.size)
+
+                val packet = wakeUpPacket?.asDatagramPacket
+                if (packet != null) send(packet)
                 while (true) {
+                    datagramPacket.data = byteArray
                     receive(datagramPacket)
-                    if (responseCondition(datagramPacket.asPacket)) apply(onDiscovery)
+                    val receivedPacket = datagramPacket.asPacket
+                    if (responseCondition(receivedPacket)) respondWith(this, datagramPacket, receivedPacket)
                 }
                 close()
             }.start()

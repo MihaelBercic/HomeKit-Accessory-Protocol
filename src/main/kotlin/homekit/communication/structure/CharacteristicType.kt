@@ -48,6 +48,12 @@ enum class CharacteristicType(
     @SerializedName("2F")
     Saturation(0, Format.Float, 0x2F, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
 
+    @SerializedName("8")
+    Brightness(0, Format.Int, 0x8, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, Permission.Notify, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
+
+    @SerializedName("CE")
+    ColorTemperature(50, Format.Uint32, 0xCE, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, Permission.Notify, min = 50, max = 400),
+
     @SerializedName("7C")
     TargetPosition(0, Format.Uint8, 0x7C, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
 
@@ -55,6 +61,13 @@ enum class CharacteristicType(
     CurrentPosition(0, Format.Uint8, 0x6D, Permission.Notify, Permission.PairedRead, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
 
     @SerializedName("72")
-    PositionState(0, Format.Uint8, 0x72, Permission.Notify, Permission.PairedRead, unit = CharacteristicUnit.Percentage, min = 0, max = 2),
+    PositionState(2, Format.Uint8, 0x72, Permission.Notify, Permission.PairedRead, unit = CharacteristicUnit.Percentage, min = 0, max = 2),
 
+    @SerializedName("6F")
+    HoldPosition(0, Format.Boolean, 0x6F, Permission.PairedWrite)
+
+
+    ;
+
+    val isReadOnly = permissions.size == 1 && permissions[0] == Permission.PairedRead
 }

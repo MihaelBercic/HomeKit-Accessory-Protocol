@@ -11,12 +11,11 @@ import java.nio.ByteBuffer
  */
 
 
-class TXTRecord(override val label: String, block: MutableMap<Any, Any>.() -> Unit = {}) : CompleteRecord {
+class TXTRecord(override val label: String, block: MutableMap<Any, Any>.() -> Unit = {}) : CompleteRecord() {
 
+    val dataMap: MutableMap<Any, Any> = mutableMapOf<Any, Any>().apply(block)
     private val cleanupRegex = "[(,\\s){}]".toRegex()
-    private val dataMap: MutableMap<Any, Any> = mutableMapOf<Any, Any>().apply(block)
     override val type = RecordType.TXT
-    override val hasProperty = true
 
     override fun writeData(buffer: ByteBuffer) {
         val dataLength = dataMap.size + dataMap.toString().replace(cleanupRegex, "").length

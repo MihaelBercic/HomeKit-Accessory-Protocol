@@ -23,34 +23,11 @@ fun BitSet.minimumBytes(n: Int): ByteArray {
         .reversedArray()
 }
 
-fun ByteBuffer.readEncodedLabel(): String {
-    val characters = mutableListOf<Byte>()
-    val dotAsByte = '.'.toByte()
-    var returnTo = 0
-    do {
-        val nextByte = get()
-        when {
-            nextByte.isCharacter -> characters.add(nextByte)
-            nextByte.isLength -> if (characters.isNotEmpty()) characters.add(dotAsByte)
-            nextByte.isPointer -> {
-                val jumpPosition = get().toInt() and 255
-                if (returnTo == 0) returnTo = position()
-                position(jumpPosition)
-            }
-        }
-    } while (nextByte.toInt() != 0)
-    if (returnTo > 0) position(returnTo)
-    return String(characters.toByteArray())
-}
-
 fun generateMAC(): String {
     val random = Random()
-    return (0 until 6).joinToString(":") { Integer.toHexString(random.nextInt(255) + 1).padStart(2, '0') }
+    return (0 until 6).joinToString(":") { Integer.toHexString(random.nextInt(255) + 1).padStart(2, '0') }.toUpperCase()
 }
 
-val Byte.isPointer get() = asString == "11000000"
-val Byte.isCharacter get() = this in 30..255
-val Byte.isLength get() = this in 1..63
 fun Int.bits(from: Int, count: Int): Int = (this shr from) and (2.0.pow(count) - 1).toInt()
 
 

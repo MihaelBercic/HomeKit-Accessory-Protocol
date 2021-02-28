@@ -16,7 +16,7 @@ class AccessoryStorage {
     @Transient
     val accessoryMap: HashMap<Int, Accessory> = hashMapOf()
 
-    operator fun get(aid: Int) = accessoryMap[aid]
+    operator fun get(aid: Int) = accessoryMap[aid] ?: throw Exception("No accessory with aid of $aid.")
 
     fun addAccessory(accessory: Accessory) {
         accessories.add(accessory)

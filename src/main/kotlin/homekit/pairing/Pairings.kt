@@ -1,9 +1,11 @@
 package homekit.pairing
 
+import Logger
 import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.Pairing
+import homekit.communication.structure.data.PairingStorage
 import homekit.pairing.encryption.Ed25519
 import homekit.tlv.structure.*
 
@@ -14,7 +16,7 @@ import homekit.tlv.structure.*
  */
 object Pairings {
 
-    fun handleRequest(session: Session, pairings: MutableList<Pairing>, data: ByteArray): Response {
+    fun handleRequest(session: Session, pairings: PairingStorage, data: ByteArray): Response {
         if (!session.currentController.isAdmin) return TLVErrorResponse(2, TLVError.Authentication)
         val packet = TLVPacket(data)
         val stateItem = packet[TLVValue.State]
@@ -24,34 +26,41 @@ object Pairings {
 
         return when (pairingMethod) {
             PairingMethod.AddPairing -> addPairing(pairings, packet)
-            PairingMethod.RemovePairing -> removePairing()
+            PairingMethod.RemovePairing -> removePairing(pairings, session, packet)
             PairingMethod.ListPairings -> listPairings(pairings)
             else -> HttpResponse(404, "application/pairing+tlv8")
         }
     }
 
-    private fun addPairing(pairings: MutableList<Pairing>, packet: TLVPacket): Response {
+    private fun addPairing(pairings: PairingStorage, packet: TLVPacket): Response {
         val additionalIdentifier = String(packet[TLVValue.Identifier].dataArray)
         val additionalPublicKey = Ed25519.parsePublicKey(packet[TLVValue.PublicKey].dataArray)
         val additionalPermissions = packet[TLVValue.Permissions].dataArray[0]
-        val encodedAPK = Ed25519.encode(additionalPublicKey)
-        val existingPairing = pairings.firstOrNull { it.identifier == additionalIdentifier }
+        val encodedAdditionalPublicKey = Ed25519.encode(additionalPublicKey)
+        val existingPairing = pairings.findPairing(additionalIdentifier)
         val isAdmin = additionalPermissions.compareTo(1) == 0
         if (existingPairing != null) {
-            if (!encodedAPK.contentEquals(existingPairing.publicKey)) return TLVErrorResponse(2, TLVError.Unknown)
+            if (!encodedAdditionalPublicKey.contentEquals(existingPairing.publicKey)) return TLVErrorResponse(2, TLVError.Unknown)
             existingPairing.isAdmin = isAdmin
-        } else pairings.add(Pairing(additionalIdentifier, encodedAPK, isAdmin))
+        } else pairings.addPairing(Pairing(additionalIdentifier, encodedAdditionalPublicKey, isAdmin))
         return Response(TLVPacket(TLVItem(TLVValue.State, 2)).toByteArray())
     }
 
-    private fun removePairing(): Response {
-        // TODO
-        return Response(byteArrayOf())
+    private fun removePairing(pairingStorage: PairingStorage, session: Session, packet: TLVPacket): Response {
+        val method = packet[TLVValue.Method]
+        val identifier = String(packet[TLVValue.Identifier].dataArray)
+        val currentIdentifier = session.currentController
+        val isAdmin = currentIdentifier.isAdmin
+        Logger.info("On removing pairing, method used: $method for the identifier $identifier. Is it coming from admin? $isAdmin")
+        if (!isAdmin) return TLVErrorResponse(2, TLVError.Authentication)
+        pairingStorage.removePairing(identifier)
+        session.shouldClose = true
+        return Response(TLVPacket(TLVItem(TLVValue.State, 2)).toByteArray())
     }
 
-    private fun listPairings(pairings: MutableList<Pairing>): Response {
+    private fun listPairings(pairingStorage: PairingStorage): Response {
         val state = TLVItem(TLVValue.State, 2)
-        val items = pairings.map { pairing ->
+        val items = pairingStorage.list.map { pairing ->
             listOf(
                 TLVItem(TLVValue.Identifier, *pairing.identifier.toByteArray()),
                 TLVItem(TLVValue.PublicKey, *pairing.publicKey),
