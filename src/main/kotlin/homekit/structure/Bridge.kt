@@ -1,6 +1,6 @@
 package homekit.structure
 
-import Logger
+import utils.Logger
 import homekit.communication.structure.AppleServices
 import homekit.communication.structure.CharacteristicType
 import homekit.communication.structure.data.ChangeRequest

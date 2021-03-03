@@ -1,6 +1,5 @@
 package homekit
 
-import Logger
 import mdns.Header
 import mdns.MulticastService
 import mdns.Packet
@@ -10,6 +9,7 @@ import mdns.records.PTRRecord
 import mdns.records.SRVRecord
 import mdns.records.TXTRecord
 import mdns.records.structure.RecordType
+import utils.Logger
 import java.lang.Thread.sleep
 import java.net.DatagramPacket
 import java.net.InetAddress
@@ -24,21 +24,36 @@ import kotlin.random.Random
 
 class HomeKitService(settings: Settings, name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
 
-    init {
-        Logger.trace(localhost)
-    }
-
     private val recordName = "$name.$protocol"
     private val targetName = "$name.local"
     private val tcpAnswer = PTRRecord(protocol) { domain = recordName }
 
-    override var responseCondition: Packet.() -> Boolean = {
-        !header.isResponse
-                && queryRecords.any { it.label == protocol || it.label == recordName }
-                && answerRecords.none { it.label == protocol || it.label == recordName || it.label == targetName }
+    init {
+        Logger.trace("Service $recordName running on $localhost:${settings.port}")
     }
 
-    override var respondWith: (MulticastSocket, DatagramPacket, Packet) -> Unit = { socket, datagramPacket, packet ->
+    override fun condition(packet: Packet): Boolean = !packet.header.isResponse
+            && packet.queryRecords.any { it.label == protocol || it.label == recordName }
+            && packet.answerRecords.none { it.label == protocol || it.label == recordName || it.label == targetName }
+
+    private val srvRecord = SRVRecord(recordName) {
+        port = settings.port
+        target = targetName
+    }
+
+    private val addressRecord = ARecord("$name.local") { address = localhost.hostAddress }
+
+    private val txtRecord = TXTRecord(recordName) {
+        put("c#", settings.configurationNumber)
+        put("id", settings.serverMAC)
+        put("md", name)
+        put("pv", "1.1")
+        put("s#", "1")
+        put("sf", 0x00) // TODO update when paired / unpaired
+        put("ci", 2)
+    }
+
+    override fun respond(socket: MulticastSocket, datagramPacket: DatagramPacket, packet: Packet) {
         val desiredQueries = packet.queryRecords.filter { it.label == protocol || it.label == recordName }
         Logger.info("[${datagramPacket.socketAddress}] is asking for ${desiredQueries.map { "[${if (it.hasProperty) "Unicast" else "Multicast"}] ${it.label}" }} with answers ${packet.answerRecords.map { "${it.type} ${it.label}" }}")
         val includePointer = desiredQueries.any { it.type == RecordType.PTR }
@@ -62,24 +77,6 @@ class HomeKitService(settings: Settings, name: String = "HomeServer") : Multicas
         if (!isUnicast) sleep(Random.nextLong(100, 300))
         socket.send(if (isUnicast) datagramPacket else newDatagramPacket)
     }
-
-    private val srvRecord = SRVRecord(recordName) {
-        port = settings.port
-        target = targetName
-    }
-
-    private val addressRecord = ARecord("$name.local") { address = localhost.hostAddress }
-
-    private val txtRecord = TXTRecord(recordName) {
-        put("c#", settings.configurationNumber)
-        put("id", settings.serverMAC)
-        put("md", name)
-        put("pv", "1.1")
-        put("s#", "1")
-        put("sf", 0x00) // TODO update when paired / unpaired
-        put("ci", 2)
-    }
-
 
     override val wakeUpPacket: Packet = Packet(Header(isResponse = true)).apply {
         answerRecords.add(tcpAnswer)

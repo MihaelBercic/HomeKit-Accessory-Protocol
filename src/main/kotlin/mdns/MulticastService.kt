@@ -1,6 +1,6 @@
 package mdns
 
-import Logger
+import utils.Logger
 import java.net.*
 
 
@@ -16,8 +16,8 @@ abstract class MulticastService(val protocol: String, val localhost: InetAddress
     private val inetSocketAddress = InetSocketAddress(destination, mDNS)
     private val myNetworkInterface = NetworkInterface.getByInetAddress(localhost)
 
-    open var responseCondition: Packet.() -> Boolean = { false }
-    abstract var respondWith: (socket: MulticastSocket, receivedPacket: DatagramPacket, asPacket: Packet) -> Unit
+    abstract fun condition(packet: Packet): Boolean
+    abstract fun respond(socket: MulticastSocket, datagramPacket: DatagramPacket, packet: Packet)
 
     open val wakeUpPacket: Packet? = null
 
@@ -37,13 +37,11 @@ abstract class MulticastService(val protocol: String, val localhost: InetAddress
                         datagramPacket.data = byteArray
                         receive(datagramPacket)
                         val receivedPacket = datagramPacket.asPacket
-                        if (responseCondition(receivedPacket)) respondWith(this, datagramPacket, receivedPacket)
+                        if (condition(receivedPacket)) respond(this, datagramPacket, receivedPacket)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
                 }
-
-                close()
             }.start()
         }
     }

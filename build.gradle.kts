@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.30"
 }
 
 group = "si.homeserver"
@@ -19,9 +19,7 @@ dependencies {
 
 tasks.jar {
     manifest {
-        attributes(
-            "Main-Class" to "MainKt"
-        )
+        attributes("Main-Class" to "MainKt")
     }
 
     from(configurations.compileClasspath.map { config -> config.map { if (it.isDirectory) it else zipTree(it) } })

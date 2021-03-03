@@ -1,10 +1,7 @@
 package homekit
 
-import Logger
-import appleGson
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
-import gson
 import homekit.communication.*
 import homekit.communication.structure.*
 import homekit.communication.structure.data.*
@@ -13,10 +10,13 @@ import homekit.pairing.PairVerify
 import homekit.pairing.Pairings
 import homekit.pairing.TLVErrorResponse
 import homekit.structure.Bridge
-import homekit.tlv.structure.TLVError
-import readOrCompute
+import homekit.tlv.TLVError
 import shelly.ShellyBulb
 import shelly.ShellySwitch
+import utils.Logger
+import utils.appleGson
+import utils.gson
+import utils.readOrCompute
 import java.net.ServerSocket
 
 /**
@@ -74,7 +74,7 @@ class HomeKitServer(val settings: Settings) {
         val response = when {
             path == "/pair-setup" && method == HttpMethod.POST -> PairSetup.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pair-verify" && method == HttpMethod.POST -> PairVerify.handleRequest(settings, pairings, session, httpRequest.content)
-            path == "/accessories" && method == HttpMethod.GET -> HttpResponse(data = *appleGson.toJson(this.accessoryStorage).apply { println(this) }.toByteArray())
+            path == "/accessories" && method == HttpMethod.GET -> HttpResponse(data = appleGson.toJson(this.accessoryStorage).apply { println(this) }.toByteArray())
             path == "/characteristics" && method == HttpMethod.PUT -> {
                 val body = String(httpRequest.content)
                 val changeRequests = gson.fromJson(body, ChangeRequests::class.java)
@@ -104,7 +104,7 @@ class HomeKitServer(val settings: Settings) {
                     }
                     accessory.commitChanges(characteristics)
                 }
-                HttpResponse(207, data = *"{\"characteristics\":[${responses.joinToString(",")}]}".toByteArray())
+                HttpResponse(207, data = "{\"characteristics\":[${responses.joinToString(",")}]}".toByteArray())
             }
             path == "/characteristics" && method == HttpMethod.GET && query != null -> {
                 val querySplit = query.split("&")
@@ -124,7 +124,7 @@ class HomeKitServer(val settings: Settings) {
                         toReturn.add(CharacteristicResponse(aid, iid, characteristic.value, status = status.value))
                     }
                 }
-                HttpResponse(207, data = *("{ \"characteristics\" : ${appleGson.toJson(toReturn)} }").toByteArray())
+                HttpResponse(207, data = ("{ \"characteristics\" : ${appleGson.toJson(toReturn)} }").toByteArray())
             }
             path == "/pairings" && method == HttpMethod.POST -> Pairings.handleRequest(session, pairings, httpRequest.content)
             path == "/event" && method == HttpMethod.GET -> {
@@ -139,7 +139,7 @@ class HomeKitServer(val settings: Settings) {
                     val characteristic = accessory[it.toLong()]
                     CharacteristicResponse(aid, characteristic.iid, characteristic.value)
                 }
-                val httpResponse = HttpResponse(type = ResponseType.Event, data = *appleGson.toJson(CharacteristicsResponse(iids)).toByteArray())
+                val httpResponse = HttpResponse(type = ResponseType.Event, data = appleGson.toJson(CharacteristicsResponse(iids)).toByteArray())
                 liveSessions.forEach {
                     if (it.isSecure) {
                         Logger.info("Sending event to [${it.currentController.identifier}]!")

@@ -1,6 +1,6 @@
 package homekit
 
-import gson
+import utils.gson
 import java.io.File
 
 /**

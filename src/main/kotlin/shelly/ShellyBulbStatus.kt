@@ -8,8 +8,8 @@ import com.google.gson.annotations.SerializedName
  * using IntelliJ IDEA
  */
 data class ShellyBulbStatus(
-    @SerializedName("ison") val isOn: Boolean,
     val brightness: Int,
     val white: Int,
+    @SerializedName("ison") val isOn: Boolean,
     @SerializedName("temp")val temperature: Int
 )

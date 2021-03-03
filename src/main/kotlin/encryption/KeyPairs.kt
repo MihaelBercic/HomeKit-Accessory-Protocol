@@ -1,4 +1,4 @@
-package homekit.encryption
+package encryption
 
 import java.security.interfaces.EdECPrivateKey
 import java.security.interfaces.EdECPublicKey

@@ -1,18 +1,18 @@
 package homekit.pairing
 
 import asByteArray
+import encryption.ChaCha
+import encryption.Curve25519
+import encryption.Ed25519
 import homekit.Settings
 import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.PairingStorage
-import homekit.encryption.ChaCha
-import homekit.encryption.Curve25519
-import homekit.encryption.Ed25519
-import homekit.tlv.structure.TLVError
-import homekit.tlv.structure.TLVItem
-import homekit.tlv.structure.TLVPacket
-import homekit.tlv.structure.TLVValue
+import homekit.tlv.TLVError
+import homekit.tlv.TLVItem
+import homekit.tlv.TLVPacket
+import homekit.tlv.TLVValue
 import java.nio.ByteBuffer
 
 
@@ -74,7 +74,7 @@ object PairVerify {
         )
 
         session.currentState = 3
-        return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
+        return HttpResponse(contentType = contentType, data = responsePacket.toByteArray())
     }
 
     private fun verifyDeviceInformation(pairings: PairingStorage, session: Session, encryptedItem: TLVItem): Response {
@@ -95,7 +95,7 @@ object PairVerify {
             currentState = 1
             isSecure = true
         }
-        return HttpResponse(contentType = contentType, data = *TLVPacket(TLVItem(TLVValue.State, 0x04)).toByteArray())
+        return HttpResponse(contentType = contentType, data = TLVPacket(TLVItem(TLVValue.State, 0x04)).toByteArray())
     }
 
 }

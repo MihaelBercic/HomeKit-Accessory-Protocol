@@ -18,7 +18,6 @@ class ARecord(override val label: String, block: ARecord.() -> Unit = {}) : Comp
         apply(block)
     }
 
-
     override fun writeData(buffer: ByteBuffer) {
         val split = address.split(".")
         buffer.putShort(split.size.toShort())

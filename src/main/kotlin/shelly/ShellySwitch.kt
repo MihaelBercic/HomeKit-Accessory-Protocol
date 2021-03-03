@@ -1,24 +1,18 @@
 package shelly
 
-import Logger
-import NetworkRequestType
-import com.google.gson.annotations.SerializedName
-import gson
+import utils.Logger
 import homekit.communication.structure.AppleServices
 import homekit.communication.structure.CharacteristicType
 import homekit.communication.structure.data.ChangeRequest
 import homekit.structure.Accessory
+import utils.NetworkRequestType
+import utils.gson
 import java.net.URL
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
-
-    data class RollerStats(
-        @SerializedName("current_pos")
-        val position: Int = 0
-    )
 
     override fun setup(configurationDetails: Map<String, Any>) {
         registerInformation("Shelly Switch", "1.0.0", "1.0", "Shelly", "Switch", "Sh2lly") {
@@ -27,11 +21,10 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
 
         service(2, AppleServices.WindowCovering) {
             val infoRequest = sendRequest(NetworkRequestType.GET, "/roller/0")
-            val stats = gson.fromJson(String(infoRequest.second), RollerStats::class.java)
-
+            val switchStatus = gson.fromJson(String(infoRequest.second), ShellySwitchStatus::class.java)
             val state = addCharacteristic(CharacteristicType.PositionState, supportsEvents = true)
-            val currentPosition = addCharacteristic(CharacteristicType.CurrentPosition, stats.position, supportsEvents = true)
-            val targetPosition = addCharacteristic(CharacteristicType.TargetPosition, stats.position) {
+            val currentPosition = addCharacteristic(CharacteristicType.CurrentPosition, switchStatus.position, supportsEvents = true)
+            val targetPosition = addCharacteristic(CharacteristicType.TargetPosition, switchStatus.position) {
                 value?.apply {
                     currentPosition.value = this
                     actions["go"] = "to_pos"
@@ -44,7 +37,6 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
                 sendRequest(NetworkRequestType.GET, "/roller/0?go=stop")
             }
 
-            Logger.debug("[$aid] Registering actions...")
             sendRequest(NetworkRequestType.GET, "/settings/roller/0?roller_stop_url=http://192.168.1.20:3000/event?characteristics=$aid:${currentPosition.iid},${state.iid},${targetPosition.iid}")
         }
 

@@ -1,12 +1,13 @@
 package homekit.pairing
 
-import Logger
+import utils.Logger
+import encryption.Ed25519
 import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.Pairing
 import homekit.communication.structure.data.PairingStorage
-import homekit.encryption.Ed25519
+import homekit.tlv.*
 import homekit.tlv.structure.*
 
 /**

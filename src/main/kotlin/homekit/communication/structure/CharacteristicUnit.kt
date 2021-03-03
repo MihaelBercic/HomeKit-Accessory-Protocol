@@ -1,7 +1,6 @@
 package homekit.communication.structure
 
 import com.google.gson.annotations.SerializedName
-import kotlin.random.Random
 
 /**
  * Created by Mihael Valentin Berčič

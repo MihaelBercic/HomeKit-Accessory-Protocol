@@ -1,3 +1,7 @@
+package utils
+
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import java.io.File
 import java.math.BigInteger
 import java.net.HttpURLConnection
@@ -118,3 +122,12 @@ fun urlRequest(type: NetworkRequestType, url: String, body: Any, customBlock: Ht
     }
     throw Exception("Http Request Failed.")
 }
+
+/**
+ * Created by Mihael Valentin Berčič
+ * on 08/12/2020 at 22:41
+ * using IntelliJ IDEA
+ */
+
+val gson: Gson = GsonBuilder().create()
+val appleGson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()

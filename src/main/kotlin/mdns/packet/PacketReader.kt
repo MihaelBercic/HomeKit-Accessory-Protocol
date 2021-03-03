@@ -1,7 +1,5 @@
 package mdns.packet
 
-import Logger
-import asHexString
 import mdns.Packet
 import mdns.records.*
 import mdns.records.structure.CompleteRecord
@@ -27,23 +25,15 @@ class PacketReader(datagramPacket: DatagramPacket) {
     private val additionalCount = buffer.short
 
     fun buildPacket(): Packet {
-        try {
-            val packet = Packet(header)
-            for (i in 0 until questionCount) readRecordInformation().apply {
-                if (classCode == 1) packet.queryRecords.add(QueryRecord(label, type, hasProperty))
-            }
-
-            for (i in 0 until answerCount) parseCompleteRecord(packet.answerRecords)
-            for (i in 0 until authorityCount) parseCompleteRecord(packet.authorityRecords)
-            for (i in 0 until additionalCount) parseCompleteRecord(packet.additionalRecords)
-            return packet
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Logger.info("Remaining: " + buffer.remaining())
-            Logger.info("Size: " + buffer.array().size)
-            println(buffer.array().asHexString)
+        val packet = Packet(header)
+        for (i in 0 until questionCount) readRecordInformation().apply {
+            if (classCode == 1) packet.queryRecords.add(QueryRecord(label, type, hasProperty))
         }
-        return throw Exception("")
+
+        for (i in 0 until answerCount) parseCompleteRecord(packet.answerRecords)
+        for (i in 0 until authorityCount) parseCompleteRecord(packet.authorityRecords)
+        for (i in 0 until additionalCount) parseCompleteRecord(packet.additionalRecords)
+        return packet
     }
 
     private fun readRecordInformation(): RecordInformation {

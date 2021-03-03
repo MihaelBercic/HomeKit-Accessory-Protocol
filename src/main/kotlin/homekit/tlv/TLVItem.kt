@@ -1,4 +1,4 @@
-package homekit.tlv.structure
+package homekit.tlv
 
 import java.nio.ByteBuffer
 import kotlin.math.ceil
@@ -12,13 +12,13 @@ open class TLVItem(val identifier: TLVValue, vararg content: Byte = ByteArray(0)
 
     val dataList = content.toMutableList()
     val dataArray get() = dataList.toByteArray()
-    val dataLength: Int get() = dataList.size
     val totalLength: Int get() = dataLength + 2 * ceil(dataLength / 255.0).toInt()
+    private val dataLength: Int get() = dataList.size
 
     fun appendData(dataToAppend: ByteArray) = dataList.addAll(dataToAppend.toTypedArray())
 
-    val writeData: ByteBuffer.() -> Unit
-        get() = {
+    open fun writeData(buffer: ByteBuffer) {
+        buffer.apply {
             val type = identifier.typeValue.toByte()
             dataList.toList().chunked(255).forEach { fragment ->
                 put(type)
@@ -26,8 +26,7 @@ open class TLVItem(val identifier: TLVValue, vararg content: Byte = ByteArray(0)
                 put(fragment.toByteArray())
             }
         }
-    val readData: ByteBuffer.() -> Unit get() = {}
-
+    }
 
     override fun toString(): String = "$identifier [$dataLength]"
 }

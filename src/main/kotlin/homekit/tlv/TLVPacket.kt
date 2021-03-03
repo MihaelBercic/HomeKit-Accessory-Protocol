@@ -1,4 +1,4 @@
-package homekit.tlv.structure
+package homekit.tlv
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -10,7 +10,7 @@ import java.nio.ByteOrder
  */
 class TLVPacket {
 
-    val items: MutableList<TLVItem> = mutableListOf()
+    private val items: MutableList<TLVItem> = mutableListOf()
 
     operator fun get(tlvValue: TLVValue) = items.firstOrNull { it.identifier == tlvValue } ?: throw Exception("No $tlvValue in this packet.")
 
@@ -25,7 +25,7 @@ class TLVPacket {
     fun toByteArray(): ByteArray = ByteBuffer.allocate(items.sumBy { it.totalLength }).apply { items.forEach { it.writeData(this) } }.array()
 
 
-    fun parseTLV(byteArray: ByteArray): List<TLVItem> {
+    private fun parseTLV(byteArray: ByteArray): List<TLVItem> {
         val items = mutableListOf<TLVItem>()
         val byteBuffer = ByteBuffer.wrap(byteArray).order(ByteOrder.LITTLE_ENDIAN)
         var previous: TLVItem? = null

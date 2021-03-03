@@ -1,8 +1,8 @@
 package homekit.communication.structure.data
 
 import com.google.gson.annotations.Expose
-import gson
 import homekit.structure.Accessory
+import utils.gson
 import java.io.File
 
 /**

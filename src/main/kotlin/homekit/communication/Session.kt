@@ -1,12 +1,12 @@
 package homekit.communication
 
-import Logger
+import encryption.ChaCha
+import encryption.HKDF
+import encryption.SRP
 import homekit.Constants
 import homekit.HomeKitServer
 import homekit.communication.structure.data.Pairing
-import homekit.encryption.ChaCha
-import homekit.encryption.HKDF
-import homekit.encryption.SRP
+import utils.Logger
 import java.io.InputStream
 import java.net.Socket
 import java.nio.ByteBuffer
@@ -38,6 +38,7 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
 
     init {
         try {
+            socket.tcpNoDelay = true
             while (!shouldClose) {
                 val aad = inputStream.readNBytes(2)
                 if (aad.isEmpty()) {
@@ -80,17 +81,16 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
         Logger.error("Input stream has let us know it is closed. Shutting this session down.")
         shouldClose = true
         homeKitServer.liveSessions.remove(this)
+        socket.shutdownInput()
+        socket.shutdownOutput()
         inputStream.close()
         outputStream.close()
         socket.close()
     }
 
     fun sendMessage(response: Response, encrypt: Boolean = true) {
-        outputStream.apply {
-            write(if (!encrypt) response.data else encodeIntoFrames(response))
-            flush()
-            // if (encrypt) Logger.info("Response: ${String(response.data).dropWhile { it != '{' }}")
-        }
+        outputStream.write(if (!encrypt) response.data else encodeIntoFrames(response))
+        outputStream.flush()
     }
 
     fun setSharedSecret(sharedSecret: ByteArray) {
@@ -107,7 +107,7 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
 
     private fun encodeIntoFrames(response: Response): ByteArray {
         val dataToEncrypt = response.data.toList().chunked(1024)
-        val totalSizeNeeded = dataToEncrypt.sumBy { it.size + 2 + 16 }
+        val totalSizeNeeded = dataToEncrypt.sumBy { it.size + 18 }
         val byteBuffer = ByteBuffer.allocate(totalSizeNeeded)
 
         dataToEncrypt.forEach { frame ->

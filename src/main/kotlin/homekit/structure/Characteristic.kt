@@ -1,6 +1,7 @@
 package homekit.structure
 
 import com.google.gson.annotations.Expose
+import homekit.communication.LiveSessions
 import homekit.communication.structure.CharacteristicType
 import homekit.communication.structure.Format
 
@@ -28,7 +29,7 @@ class Characteristic(value: Any? = null, @Expose val type: CharacteristicType, @
     val maxLen: Any? = null
 
     @Expose
-    var ev = false
+    var ev = LiveSessions.registeredEvents[Thread.currentThread()]?.contains(iid) ?: false
 
     @Expose
     var value: Any? = value

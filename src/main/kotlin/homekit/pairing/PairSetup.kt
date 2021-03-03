@@ -2,6 +2,9 @@ package homekit.pairing
 
 import asBigInteger
 import asByteArray
+import encryption.ChaCha
+import encryption.Ed25519
+import encryption.HKDF
 import homekit.Constants
 import homekit.Settings
 import homekit.communication.HttpResponse
@@ -9,12 +12,9 @@ import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.Pairing
 import homekit.communication.structure.data.PairingStorage
-import homekit.encryption.ChaCha
-import homekit.encryption.Ed25519
-import homekit.encryption.HKDF
-import homekit.tlv.structure.TLVItem
-import homekit.tlv.structure.TLVPacket
-import homekit.tlv.structure.TLVValue
+import homekit.tlv.TLVItem
+import homekit.tlv.TLVPacket
+import homekit.tlv.TLVValue
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -56,7 +56,7 @@ object PairSetup {
             TLVItem(TLVValue.PublicKey, *publicKey.asByteArray)
         )
         session.currentState = 3
-        return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
+        return HttpResponse(contentType = contentType, data = responsePacket.toByteArray())
     }
 
     private fun verifyDeviceProof(session: Session, packet: TLVPacket): Response {
@@ -74,7 +74,7 @@ object PairSetup {
         )
         session.currentState = 5
         Logger.trace("Responding with response packet!")
-        return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
+        return HttpResponse(contentType = contentType, data = responsePacket.toByteArray())
     }
 
     private fun decryptPublicInformation(settings: Settings, pairings: PairingStorage, session: Session, encryptedItem: TLVItem): HttpResponse {
@@ -135,7 +135,7 @@ object PairSetup {
 
         val controllerIdentifier = String(deviceIdentifier)
         pairings.addPairing(Pairing(controllerIdentifier, Ed25519.encode(deviceEdPublicKey), true))
-        return HttpResponse(contentType = contentType, data = *responsePacket.toByteArray())
+        return HttpResponse(contentType = contentType, data = responsePacket.toByteArray())
     }
 
     private fun generatePin(): String {

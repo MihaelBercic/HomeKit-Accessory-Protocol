@@ -1,4 +1,4 @@
-package homekit.tlv.structure
+package homekit.tlv
 
 /**
  * Created by Mihael Valentin Berčič

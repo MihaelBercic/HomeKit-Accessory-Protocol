@@ -1,4 +1,4 @@
-package homekit.encryption
+package encryption
 
 import asBigInteger
 import java.security.KeyFactory

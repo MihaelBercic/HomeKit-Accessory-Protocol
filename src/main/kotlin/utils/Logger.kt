@@ -1,3 +1,5 @@
+package utils
+
 /**
  * Created by Mihael Valentin Berčič
  * on 17/02/2021 at 18:52
