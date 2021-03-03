@@ -6,7 +6,7 @@ import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.Pairing
 import homekit.communication.structure.data.PairingStorage
-import homekit.pairing.encryption.Ed25519
+import homekit.encryption.Ed25519
 import homekit.tlv.structure.*
 
 /**
@@ -72,5 +72,3 @@ object Pairings {
 
 
 }
-
-class TLVErrorResponse(state: Byte, error: TLVError) : Response(TLVPacket(TLVItem(TLVValue.State, state), TLVItem(TLVValue.Error, error.code)).toByteArray())

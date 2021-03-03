@@ -11,4 +11,7 @@ gradle/
 src/main/java/org/
 out/
 communication/
+*.jar
+*.json
+nohup.out
 

@@ -1,3 +1,4 @@
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import homekit.HomeKitServer
 import homekit.HomeKitService
@@ -10,21 +11,12 @@ import homekit.Settings
  * using IntelliJ IDEA
  */
 
-val gson = GsonBuilder()
-    // .setPrettyPrinting()
-    //.serializeNulls()
-    .create()
+val gson: Gson = GsonBuilder().create()
+val appleGson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
 
 fun main() {
-    try {
-        val settings = readOrCompute("settings.json") { Settings(0, 3000, generateMAC()) }
-        settings.apply {
-            HomeKitServer(this).start(port)
-            HomeKitService(this, port).startAdvertising()
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-        Logger.error("An error occured...")
-    }
+    val settings = readOrCompute("settings.json") { Settings(1, 3000, generateMAC()) }
+    HomeKitServer(settings).start()
+    HomeKitService(settings).startAdvertising()
 }

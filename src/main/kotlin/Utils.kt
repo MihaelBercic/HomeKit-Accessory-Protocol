@@ -1,6 +1,7 @@
 import java.io.File
 import java.math.BigInteger
-import java.nio.ByteBuffer
+import java.net.HttpURLConnection
+import java.net.URL
 import java.security.MessageDigest
 import java.util.*
 import kotlin.experimental.xor
@@ -82,4 +83,38 @@ val BigInteger.asByteArray: ByteArray
 inline fun <reified T> readOrCompute(name: String, block: () -> T) = File(name).let {
     if (it.exists()) gson.fromJson(it.readText(), T::class.java)
     else block.invoke()
+}
+
+enum class NetworkRequestType {
+    GET, POST, PUT
+}
+
+
+fun urlRequest(type: NetworkRequestType, url: String, body: Any, customBlock: HttpURLConnection.() -> Unit = {}): Pair<Int, ByteArray> {
+    val connection = (URL(url).openConnection() as HttpURLConnection)
+    try {
+        connection.requestMethod = type.name
+        connection.apply(customBlock) // Customization
+        connection.doOutput = true
+        connection.doInput = true
+        connection.connectTimeout = 2000
+        connection.connect()
+        val outputStream = connection.outputStream
+        val inputStream = connection.inputStream
+        when (body) {
+            is String -> if (body.isNotEmpty()) outputStream.write(body.toByteArray())
+            // Left room for other types
+        }
+        val response = connection.inputStream.readAllBytes()
+
+        outputStream.close()
+        inputStream.close()
+        connection.disconnect()
+        return connection.responseCode to response
+    } catch (e: Exception) {
+        Logger.error("URL error to $url $e")
+    } finally {
+        connection.disconnect()
+    }
+    throw Exception("Http Request Failed.")
 }

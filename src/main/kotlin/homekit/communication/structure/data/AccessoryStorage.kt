@@ -1,7 +1,8 @@
 package homekit.communication.structure.data
 
+import com.google.gson.annotations.Expose
 import gson
-import homekit.communication.structure.Accessory
+import homekit.structure.Accessory
 import java.io.File
 
 /**
@@ -9,23 +10,27 @@ import java.io.File
  * on 14/02/2021 at 13:15
  * using IntelliJ IDEA
  */
-class AccessoryStorage {
+class AccessoryStorage(bridge: Accessory) {
 
+    @Expose
     private val accessories: MutableList<Accessory> = mutableListOf()
-
-    @Transient
-    val accessoryMap: HashMap<Int, Accessory> = hashMapOf()
+    private val accessoryMap: HashMap<Int, Accessory> = hashMapOf()
 
     operator fun get(aid: Int) = accessoryMap[aid] ?: throw Exception("No accessory with aid of $aid.")
+    fun contains(aid: Int) = accessoryMap.contains(aid)
 
     fun addAccessory(accessory: Accessory) {
         accessories.add(accessory)
         accessoryMap[accessory.aid] = accessory
     }
+
+    init {
+        addAccessory(bridge)
+    }
 }
 
-class Pairing(val identifier: String, val publicKey: ByteArray, var isAdmin: Boolean)
-class PairingStorage(val list: MutableList<Pairing> = mutableListOf()) {
+class Pairing(@Expose val identifier: String, @Expose val publicKey: ByteArray, @Expose var isAdmin: Boolean)
+class PairingStorage(@Expose val list: MutableList<Pairing> = mutableListOf()) {
 
     fun addPairing(pairing: Pairing) {
         list.add(pairing)

@@ -1,4 +1,4 @@
-package homekit.pairing.encryption
+package homekit.encryption
 
 import asBigInteger
 import java.security.KeyFactory
@@ -37,5 +37,3 @@ object Curve25519 {
     }.generateSecret()
 
 }
-
-data class CurveKeyPair(val privateKey: XECPrivateKey, val publicKey: XECPublicKey)

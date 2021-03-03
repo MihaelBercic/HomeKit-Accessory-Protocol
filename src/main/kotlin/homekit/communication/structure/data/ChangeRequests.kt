@@ -1,5 +1,6 @@
 package homekit.communication.structure.data
 
+import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 
 /**
@@ -9,13 +10,13 @@ import com.google.gson.annotations.SerializedName
  */
 
 data class ChangeRequest(
-    val aid: Int,
-    val iid: Int,
-    val value: Any?,
-    val authData: String?,
-    val remote: Boolean?,
-    @SerializedName("ev") val events: Boolean?,
-    @SerializedName("r") val response: Boolean?
+    @Expose val aid: Int,
+    @Expose val iid: Long,
+    @Expose val value: Any?,
+    @Expose val authData: String?,
+    @Expose val remote: Boolean?,
+    @Expose @SerializedName("ev") val events: Boolean?,
+    @Expose @SerializedName("r") val response: Boolean?
 )
 
-data class ChangeRequests(val characteristics: List<ChangeRequest>)
+data class ChangeRequests(@Expose val characteristics: List<ChangeRequest>)

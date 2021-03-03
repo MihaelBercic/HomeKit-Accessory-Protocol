@@ -22,20 +22,20 @@ import kotlin.random.Random
  * using IntelliJ IDEA
  */
 
-class HomeKitService(settings: Settings, port: Int, name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
+class HomeKitService(settings: Settings, name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
 
     init {
         Logger.trace(localhost)
     }
 
     private val recordName = "$name.$protocol"
+    private val targetName = "$name.local"
     private val tcpAnswer = PTRRecord(protocol) { domain = recordName }
-    private val udpAnswer = PTRRecord("_hap._udp.local") { domain = recordName }
 
     override var responseCondition: Packet.() -> Boolean = {
         !header.isResponse
                 && queryRecords.any { it.label == protocol || it.label == recordName }
-                && answerRecords.none { it.label == protocol || it.label == recordName || it.label == "$name.local" }
+                && answerRecords.none { it.label == protocol || it.label == recordName || it.label == targetName }
     }
 
     override var respondWith: (MulticastSocket, DatagramPacket, Packet) -> Unit = { socket, datagramPacket, packet ->
@@ -64,8 +64,8 @@ class HomeKitService(settings: Settings, port: Int, name: String = "HomeServer")
     }
 
     private val srvRecord = SRVRecord(recordName) {
-        this.port = port
-        target = "$name.local"
+        port = settings.port
+        target = targetName
     }
 
     private val addressRecord = ARecord("$name.local") { address = localhost.hostAddress }
@@ -76,12 +76,12 @@ class HomeKitService(settings: Settings, port: Int, name: String = "HomeServer")
         put("md", name)
         put("pv", "1.1")
         put("s#", "1")
-        put("sf", 0x00)
+        put("sf", 0x00) // TODO update when paired / unpaired
         put("ci", 2)
     }
 
 
-    override val wakeUpPacket: Packet = Packet(Header(isResponse = false)).apply {
+    override val wakeUpPacket: Packet = Packet(Header(isResponse = true)).apply {
         answerRecords.add(tcpAnswer)
         additionalRecords.apply {
             add(srvRecord)

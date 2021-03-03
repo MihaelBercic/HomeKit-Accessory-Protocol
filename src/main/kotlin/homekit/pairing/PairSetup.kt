@@ -9,10 +9,9 @@ import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.Pairing
 import homekit.communication.structure.data.PairingStorage
-import homekit.pairing.encryption.ChaCha
-import homekit.pairing.encryption.Ed25519
-import homekit.pairing.encryption.HKDF
-import homekit.tlv.structure.TLVError
+import homekit.encryption.ChaCha
+import homekit.encryption.Ed25519
+import homekit.encryption.HKDF
 import homekit.tlv.structure.TLVItem
 import homekit.tlv.structure.TLVPacket
 import homekit.tlv.structure.TLVValue
@@ -106,11 +105,11 @@ object PairSetup {
         if (!isVerified) throw Exception("Signature not verified...")
 
         val accessoryKeyPair = Ed25519.generateKeyPair().apply {
-            Ed25519.storePrivateKey("communication/ed25519-private", private)
-            Ed25519.storePublicKey("communication/ed25519-public", public)
+            Ed25519.storePrivateKey("communication/ed25519-private", privateKey)
+            Ed25519.storePublicKey("communication/ed25519-public", publicKey)
         }
 
-        val encodedPublicKey = Ed25519.encode(accessoryKeyPair.public)
+        val encodedPublicKey = Ed25519.encode(accessoryKeyPair.publicKey)
 
         val accessoryHKDF = HKDF.compute("HMACSHA512", sharedSecret, Constants.accessorySignSalt, Constants.accessorySignInfo, 32)
         val accessoryIdentifier = settings.serverMAC.toByteArray()
@@ -119,7 +118,7 @@ object PairSetup {
         val subPacket = TLVPacket(
             TLVItem(TLVValue.Identifier, *accessoryIdentifier),
             TLVItem(TLVValue.PublicKey, *encodedPublicKey),
-            TLVItem(TLVValue.Signature, *Ed25519.sign(accessoryKeyPair.private, accessoryInfo))
+            TLVItem(TLVValue.Signature, *Ed25519.sign(accessoryKeyPair.privateKey, accessoryInfo))
         )
         val subPacketArray = subPacket.toByteArray()
         val encryptionBuffer = ByteBuffer.allocate(12 + subPacketArray.size).apply {

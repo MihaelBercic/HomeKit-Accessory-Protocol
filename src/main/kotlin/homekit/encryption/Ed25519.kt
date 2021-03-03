@@ -1,9 +1,8 @@
-package homekit.pairing.encryption
+package homekit.encryption
 
 import asBigInteger
 import asByteArray
 import java.io.File
-import java.nio.file.Paths
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.Signature
@@ -85,5 +84,3 @@ object Ed25519 {
     }
 
 }
-
-data class EdEcKeyPair(val private: EdECPrivateKey, val public: EdECPublicKey)

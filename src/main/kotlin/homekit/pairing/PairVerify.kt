@@ -6,9 +6,9 @@ import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.PairingStorage
-import homekit.pairing.encryption.ChaCha
-import homekit.pairing.encryption.Curve25519
-import homekit.pairing.encryption.Ed25519
+import homekit.encryption.ChaCha
+import homekit.encryption.Curve25519
+import homekit.encryption.Ed25519
 import homekit.tlv.structure.TLVError
 import homekit.tlv.structure.TLVItem
 import homekit.tlv.structure.TLVPacket
@@ -90,9 +90,10 @@ object PairVerify {
 
         val pairing = pairings.findPairing(controllerIdentifier) ?: return TLVErrorResponse(4, TLVError.Authentication)
         session.apply {
+            currentController = pairing
+            Logger.info("Set the current controller to ${pairing.identifier}")
             currentState = 1
             isSecure = true
-            currentController = pairing
         }
         return HttpResponse(contentType = contentType, data = *TLVPacket(TLVItem(TLVValue.State, 0x04)).toByteArray())
     }

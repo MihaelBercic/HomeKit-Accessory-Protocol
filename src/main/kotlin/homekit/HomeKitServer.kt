@@ -1,6 +1,8 @@
 package homekit
 
 import Logger
+import appleGson
+import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import gson
 import homekit.communication.*
@@ -10,8 +12,11 @@ import homekit.pairing.PairSetup
 import homekit.pairing.PairVerify
 import homekit.pairing.Pairings
 import homekit.pairing.TLVErrorResponse
+import homekit.structure.Bridge
 import homekit.tlv.structure.TLVError
 import readOrCompute
+import shelly.ShellyBulb
+import shelly.ShellySwitch
 import java.net.ServerSocket
 
 /**
@@ -22,34 +27,33 @@ import java.net.ServerSocket
 class HomeKitServer(val settings: Settings) {
 
     private var isRunning = true
-    private val accessoryStorage: AccessoryStorage = AccessoryStorage()
+    private val accessoryStorage: AccessoryStorage = AccessoryStorage(Bridge())
     private val pairings = readOrCompute("pairings.json") { PairingStorage() }
     val liveSessions = mutableListOf<Session>()
 
-    fun start(port: Int) {
+    fun start() {
         settings.apply {
             configurationNumber++
             save()
         }
-        Bridge().apply {
-            setup(emptyMap())
-            accessoryStorage.addAccessory(this)
-        }
         readOrCompute("config.json") { Configuration() }.apply {
-            accessoryData.forEachIndexed { index, data ->
+            accessoryData.forEach { data ->
+                val accessoryIP = data getString "ip"
                 val accessoryType = data getString "type"
+                val aid = data getInteger "id"
+                if (aid <= 1 || accessoryStorage.contains(aid)) throw Exception("Accessory ID should be larger than 1 and unique!")
                 val accessory = when (accessoryType) {
-                    "Light" -> Bulb(index + 2)
-                    "Switch" -> Switch(index + 2)
+                    "Light" -> ShellyBulb(aid, accessoryIP)
+                    "ShellySwitch" -> ShellySwitch(aid, accessoryIP)
                     else -> throw Exception("Accessory type of $accessoryType is not supported.")
                 }
                 accessory.setup(data)
                 accessoryStorage.addAccessory(accessory)
+                Logger.debug("Successfully registered $accessoryIP with aid $aid and type $accessoryType.")
             }
         }
-
         Thread {
-            ServerSocket(port).apply {
+            ServerSocket(settings.port).apply {
                 soTimeout = 0
                 Logger.info("Started our server...")
                 while (isRunning) {
@@ -70,7 +74,7 @@ class HomeKitServer(val settings: Settings) {
         val response = when {
             path == "/pair-setup" && method == HttpMethod.POST -> PairSetup.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pair-verify" && method == HttpMethod.POST -> PairVerify.handleRequest(settings, pairings, session, httpRequest.content)
-            path == "/accessories" && method == HttpMethod.GET -> HttpResponse(data = *gson.toJson(this.accessoryStorage).apply { println(this) }.toByteArray())
+            path == "/accessories" && method == HttpMethod.GET -> HttpResponse(data = *appleGson.toJson(this.accessoryStorage).apply { println(this) }.toByteArray())
             path == "/characteristics" && method == HttpMethod.PUT -> {
                 val body = String(httpRequest.content)
                 val changeRequests = gson.fromJson(body, ChangeRequests::class.java)
@@ -84,8 +88,8 @@ class HomeKitServer(val settings: Settings) {
                         val characteristic = accessory[iid]
                         val status = when {
                             it.events != null -> {
-                                if (it.events && characteristic.supportsEvents) {
-                                    characteristic.ev = true
+                                if (!it.events || characteristic.supportsEvents) {
+                                    characteristic.ev = it.events
                                     0
                                 } else -70406
                             }
@@ -107,18 +111,20 @@ class HomeKitServer(val settings: Settings) {
                 val ids = querySplit[0]
                     .replace("id=", "")
                     .split(",")
-                    .map { it.split(".").let { split -> split[0].toInt() to split[1].toInt() } }
+                    .map { it.split(".").let { split -> split[0].toInt() to split[1].toLong() } }
                     .groupBy { it.first }
 
                 val toReturn = mutableListOf<CharacteristicResponse>()
                 ids.forEach { (aid, pairs) ->
                     val accessory = accessoryStorage[aid]
+                    val isReachable = accessory.isReachable
                     pairs.forEach { (_, iid) ->
                         val characteristic = accessory[iid]
-                        toReturn.add(CharacteristicResponse(aid, iid, characteristic.value))
+                        val status = if (isReachable) StatusCodes.Success else StatusCodes.UnableToPerform
+                        toReturn.add(CharacteristicResponse(aid, iid, characteristic.value, status = status.value))
                     }
                 }
-                HttpResponse(data = *("{ \"characteristics\" : ${gson.toJson(toReturn)} }").toByteArray())
+                HttpResponse(207, data = *("{ \"characteristics\" : ${appleGson.toJson(toReturn)} }").toByteArray())
             }
             path == "/pairings" && method == HttpMethod.POST -> Pairings.handleRequest(session, pairings, httpRequest.content)
             path == "/event" && method == HttpMethod.GET -> {
@@ -130,14 +136,13 @@ class HomeKitServer(val settings: Settings) {
                 val aid = split[0].toInt()
                 val accessory = accessoryStorage[aid]
                 val iids = split[1].split(",").map {
-                    val characteristic = accessory[it.toInt()]
+                    val characteristic = accessory[it.toLong()]
                     CharacteristicResponse(aid, characteristic.iid, characteristic.value)
                 }
-                val httpResponse = HttpResponse(type = ResponseType.Event, data = *gson.toJson(CharacteristicsResponse(iids)).toByteArray())
+                val httpResponse = HttpResponse(type = ResponseType.Event, data = *appleGson.toJson(CharacteristicsResponse(iids)).toByteArray())
                 liveSessions.forEach {
                     if (it.isSecure) {
-                        Logger.info("Sending event to an active session!")
-                        println(String(httpResponse.data))
+                        Logger.info("Sending event to [${it.currentController.identifier}]!")
                         it.sendMessage(httpResponse)
                     }
                 }
@@ -152,10 +157,11 @@ class HomeKitServer(val settings: Settings) {
 
 class Configuration {
 
+    @Expose
     @SerializedName("accessories")
     val accessoryData: List<Map<String, Any>> = emptyList()
 
     internal infix fun Map<String, Any>.getString(name: String) = get(name) as? String ?: throw Exception("Map does not contain the key.")
-    private infix fun Map<String, Any>.getInteger(name: String) = get(name) as? Int ?: throw Exception("Map does not contain the key.")
+    internal infix fun Map<String, Any>.getInteger(name: String) = (get(name) as? Double)?.toInt() ?: throw Exception("Map does not contain the key.")
 
 }

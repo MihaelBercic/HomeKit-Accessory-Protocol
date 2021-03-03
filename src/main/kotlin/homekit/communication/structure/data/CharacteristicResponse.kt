@@ -1,9 +1,11 @@
 package homekit.communication.structure.data
 
+import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import homekit.communication.structure.CharacteristicUnit
 import homekit.communication.structure.Format
 import homekit.communication.structure.Permission
+import homekit.communication.structure.StatusCodes
 
 /**
  * Created by Mihael Valentin Berčič
@@ -11,18 +13,19 @@ import homekit.communication.structure.Permission
  * using IntelliJ IDEA
  */
 data class CharacteristicResponse(
-    var aid: Int,
-    var iid: Int,
-    var value: Any? = null,
-    var format: Format? = null,
-    var unit: CharacteristicUnit? = null,
-    var perms: List<Permission>? = null,
-    var type: String? = null,
-    @SerializedName("ev") val events: Boolean? = null,
-    var minValue: Any? = null,
-    var maxValue: Any? = null,
-    var minStep: Any? = null,
-    var maxLen: Any? = null
+    @Expose val aid: Int,
+    @Expose val iid: Long,
+    @Expose val value: Any? = null,
+    @Expose val format: Format? = null,
+    @Expose val unit: CharacteristicUnit? = null,
+    @Expose val perms: List<Permission>? = null,
+    @Expose val type: String? = null,
+    @Expose @SerializedName("ev") val events: Boolean? = null,
+    @Expose val minValue: Any? = null,
+    @Expose val maxValue: Any? = null,
+    @Expose val minStep: Any? = null,
+    @Expose val maxLen: Any? = null,
+    @Expose val status: Int = StatusCodes.Success.value
 )
 
-data class CharacteristicsResponse(val characteristics: List<CharacteristicResponse>)
+data class CharacteristicsResponse(@Expose val characteristics: List<CharacteristicResponse>)

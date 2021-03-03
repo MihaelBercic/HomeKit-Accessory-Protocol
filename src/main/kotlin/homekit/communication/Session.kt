@@ -4,9 +4,9 @@ import Logger
 import homekit.Constants
 import homekit.HomeKitServer
 import homekit.communication.structure.data.Pairing
-import homekit.pairing.encryption.ChaCha
-import homekit.pairing.encryption.HKDF
-import homekit.pairing.srp.SRP
+import homekit.encryption.ChaCha
+import homekit.encryption.HKDF
+import homekit.encryption.SRP
 import java.io.InputStream
 import java.net.Socket
 import java.nio.ByteBuffer
@@ -34,45 +34,51 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
     private lateinit var controllerToAccessoryKey: ByteArray
 
     private val inputStream = socket.getInputStream()
-    private val outputStream = socket.getOutputStream()
+    private val outputStream = socket.getOutputStream().buffered()
 
     init {
-        while (!shouldClose) {
-            val aad = inputStream.readNBytes(2)
-            if (aad.isEmpty()) {
-                close()
-                break
-            }
-            val shouldEncrypt = isSecure
-            val request = if (!shouldEncrypt) readHeaders(inputStream, aad).let { HttpRequest(it, inputStream.readNBytes(it.contentLength)) }
-            else {
-                val contentSize = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).put(aad).position(0).short.toInt()
-                val content = inputStream.readNBytes(contentSize)
-                val tag = inputStream.readNBytes(16)
+        try {
+            while (!shouldClose) {
+                val aad = inputStream.readNBytes(2)
+                if (aad.isEmpty()) {
+                    close()
+                    break
+                }
+                val shouldEncrypt = isSecure
+                val request = if (!shouldEncrypt) readHeaders(inputStream, aad).let { HttpRequest(it, inputStream.readNBytes(it.contentLength)) }
+                else {
+                    val contentSize = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).put(aad).position(0).short.toInt()
+                    val content = inputStream.readNBytes(contentSize)
+                    val tag = inputStream.readNBytes(16)
 
-                val decodingBuffer = ByteBuffer.allocate(12 + contentSize + 16).apply {
-                    order(ByteOrder.LITTLE_ENDIAN)
-                    position(4)
-                    putLong(controllerToAccessoryCount++)
-                    put(content)
-                    put(tag)
+                    val decodingBuffer = ByteBuffer.allocate(12 + contentSize + 16).apply {
+                        order(ByteOrder.LITTLE_ENDIAN)
+                        position(4)
+                        putLong(controllerToAccessoryCount++)
+                        put(content)
+                        put(tag)
+                    }
+
+                    val decryptedContent = ChaCha.decrypt(decodingBuffer.array(), controllerToAccessoryKey, aad)
+                    val headers = parseHeaders(decryptedContent)
+                    HttpRequest(headers, decryptedContent.takeLast(headers.contentLength).toByteArray())
                 }
 
-                val decryptedContent = ChaCha.decrypt(decodingBuffer.array(), controllerToAccessoryKey, aad)
-                val headers = parseHeaders(decryptedContent)
-                HttpRequest(headers, decryptedContent.takeLast(headers.contentLength).toByteArray())
+                request.headers.apply {
+                    Logger.trace("${Logger.green}${socket.remoteSocketAddress}${Logger.reset} [${Logger.red}$httpMethod${Logger.reset}] $path ${Logger.magenta}$query${Logger.reset} ${String(request.content)}")
+                }
+                homeKitServer.handle(request, this).apply { if (this == null) println("Null response for ${request.headers}") }?.apply { sendMessage(this, shouldEncrypt) }
+                if (shouldClose) close()
             }
-
-            request.headers.apply {
-                Logger.trace("${Logger.green}${socket.remoteSocketAddress}${Logger.reset} [${Logger.red}$httpMethod${Logger.reset}] $path ${Logger.magenta}$query${Logger.reset} ${String(request.content)}")
-            }
-            homeKitServer.handle(request, this)?.apply { sendMessage(this, shouldEncrypt) }
-            if (shouldClose) close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            close()
         }
     }
 
     private fun close() {
         Logger.error("Input stream has let us know it is closed. Shutting this session down.")
+        shouldClose = true
         homeKitServer.liveSessions.remove(this)
         inputStream.close()
         outputStream.close()
@@ -80,15 +86,10 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
     }
 
     fun sendMessage(response: Response, encrypt: Boolean = true) {
-        try {
-            outputStream.apply {
-                write(if (!encrypt) response.data else encodeIntoFrames(response))
-                flush()
-                // if (encrypt) Logger.info("Response: ${String(response.data).dropWhile { it != '{' }}")
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            close()
+        outputStream.apply {
+            write(if (!encrypt) response.data else encodeIntoFrames(response))
+            flush()
+            // if (encrypt) Logger.info("Response: ${String(response.data).dropWhile { it != '{' }}")
         }
     }
 

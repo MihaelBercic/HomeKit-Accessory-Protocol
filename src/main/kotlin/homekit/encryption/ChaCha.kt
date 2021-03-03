@@ -1,4 +1,4 @@
-package homekit.pairing.encryption
+package homekit.encryption
 
 import java.nio.ByteBuffer
 import javax.crypto.Cipher
@@ -27,8 +27,6 @@ object ChaCha {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "ChaCha20-Poly1305"), IvParameterSpec(nonce))
             if (aad.isNotEmpty()) updateAAD(aad)
         }
-
-        // TODO can't possibly be correct. Has to be (nonce || actual_ciphertext || tag)
         return cipher.doFinal(data)
     }
 

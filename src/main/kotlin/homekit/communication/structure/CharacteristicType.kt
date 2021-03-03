@@ -49,10 +49,10 @@ enum class CharacteristicType(
     Saturation(0, Format.Float, 0x2F, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
 
     @SerializedName("8")
-    Brightness(0, Format.Int, 0x8, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, Permission.Notify, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
+    Brightness(0, Format.Int, 0x8, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
 
     @SerializedName("CE")
-    ColorTemperature(50, Format.Uint32, 0xCE, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, Permission.Notify, min = 50, max = 400),
+    ColorTemperature(50, Format.Uint32, 0xCE, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, min = 50, max = 400),
 
     @SerializedName("7C")
     TargetPosition(0, Format.Uint8, 0x7C, Permission.Notify, Permission.PairedRead, Permission.PairedWrite, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
@@ -64,8 +64,7 @@ enum class CharacteristicType(
     PositionState(2, Format.Uint8, 0x72, Permission.Notify, Permission.PairedRead, unit = CharacteristicUnit.Percentage, min = 0, max = 2),
 
     @SerializedName("6F")
-    HoldPosition(0, Format.Boolean, 0x6F, Permission.PairedWrite)
-
+    HoldPosition(null, Format.Boolean, 0x6F, Permission.PairedWrite)
 
     ;
 

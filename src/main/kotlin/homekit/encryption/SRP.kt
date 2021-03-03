@@ -1,4 +1,4 @@
-package homekit.pairing.srp
+package homekit.encryption
 
 import asBigInteger
 import asByteArray

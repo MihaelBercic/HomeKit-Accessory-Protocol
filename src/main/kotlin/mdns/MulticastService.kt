@@ -30,15 +30,19 @@ abstract class MulticastService(val protocol: String, val localhost: InetAddress
             Thread {
                 val byteArray = ByteArray(9000)
                 val datagramPacket = DatagramPacket(byteArray, byteArray.size)
-
                 val packet = wakeUpPacket?.asDatagramPacket
                 if (packet != null) send(packet)
                 while (true) {
-                    datagramPacket.data = byteArray
-                    receive(datagramPacket)
-                    val receivedPacket = datagramPacket.asPacket
-                    if (responseCondition(receivedPacket)) respondWith(this, datagramPacket, receivedPacket)
+                    try {
+                        datagramPacket.data = byteArray
+                        receive(datagramPacket)
+                        val receivedPacket = datagramPacket.asPacket
+                        if (responseCondition(receivedPacket)) respondWith(this, datagramPacket, receivedPacket)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
+
                 close()
             }.start()
         }
