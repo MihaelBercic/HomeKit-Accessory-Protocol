@@ -1,6 +1,6 @@
 package mdns.records.structure
 
-import minimumBytes
+import utils.minimumBytes
 import java.nio.ByteBuffer
 import java.util.*
 

@@ -25,7 +25,6 @@ open class Service(
     ) = Characteristic(value, type, ((iid shl 8) or type.id.toLong()), onChange).apply {
         if (alreadyExists(type)) throw Exception("Characteristic with type $this@hasValue already exists.")
         characteristics.add(this)
-        this.supportsEvents = supportsEvents
         accessory.mappedCharacteristics[iid] = this
     }
 

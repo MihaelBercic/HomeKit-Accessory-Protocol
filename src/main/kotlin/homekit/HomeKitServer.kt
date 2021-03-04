@@ -1,8 +1,9 @@
 package homekit
 
-import com.google.gson.annotations.Expose
-import com.google.gson.annotations.SerializedName
 import homekit.communication.*
+import homekit.communication.LiveSessions.subscribeFor
+import homekit.communication.LiveSessions.subscribedSessions
+import homekit.communication.LiveSessions.unsubscribeFrom
 import homekit.communication.structure.*
 import homekit.communication.structure.data.*
 import homekit.pairing.PairSetup
@@ -29,7 +30,6 @@ class HomeKitServer(val settings: Settings) {
     private var isRunning = true
     private val accessoryStorage: AccessoryStorage = AccessoryStorage(Bridge())
     private val pairings = readOrCompute("pairings.json") { PairingStorage() }
-    val liveSessions = mutableListOf<Session>()
 
     fun start() {
         settings.apply {
@@ -57,24 +57,29 @@ class HomeKitServer(val settings: Settings) {
                 soTimeout = 0
                 Logger.info("Started our server...")
                 while (isRunning) {
-                    val newSocket = accept()
-                    newSocket.soTimeout = 0
+                    val newSocket = accept().apply {
+                        soTimeout = 0
+                        tcpNoDelay = true
+                    }
                     Thread { Session(newSocket, this@HomeKitServer) }.start()
                 }
             }
         }.start()
     }
 
-    // TODO A lot of work
     fun handle(httpRequest: HttpRequest, session: Session): Response? {
         val headers = httpRequest.headers
         val method = headers.httpMethod
         val path = headers.path
         val query = headers.query
+        Logger.apply {
+            debug("$green${session.remoteSocketAddress}$reset [$magenta$method$reset] $path $yellow$query$reset")
+        }
         val response = when {
             path == "/pair-setup" && method == HttpMethod.POST -> PairSetup.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pair-verify" && method == HttpMethod.POST -> PairVerify.handleRequest(settings, pairings, session, httpRequest.content)
-            path == "/accessories" && method == HttpMethod.GET -> HttpResponse(data = appleGson.toJson(this.accessoryStorage).apply { println(this) }.toByteArray())
+            path == "/pairings" && method == HttpMethod.POST -> Pairings.handleRequest(session, pairings, httpRequest.content)
+            path == "/accessories" && method == HttpMethod.GET -> accessoryStorage.createHttpResponse()
             path == "/characteristics" && method == HttpMethod.PUT -> {
                 val body = String(httpRequest.content)
                 val changeRequests = gson.fromJson(body, ChangeRequests::class.java)
@@ -88,10 +93,8 @@ class HomeKitServer(val settings: Settings) {
                         val characteristic = accessory[iid]
                         val status = when {
                             it.events != null -> {
-                                if (!it.events || characteristic.supportsEvents) {
-                                    characteristic.ev = it.events
-                                    0
-                                } else -70406
+                                if (it.events) session.subscribeFor(characteristic) else session.unsubscribeFrom(characteristic)
+                                0
                             }
                             it.value != null -> {
                                 characteristic.value = it.value
@@ -107,7 +110,7 @@ class HomeKitServer(val settings: Settings) {
                 HttpResponse(207, data = "{\"characteristics\":[${responses.joinToString(",")}]}".toByteArray())
             }
             path == "/characteristics" && method == HttpMethod.GET && query != null -> {
-                val querySplit = query.split("&")
+                val querySplit = query.replace("id=", "").split("&")
                 val ids = querySplit[0]
                     .replace("id=", "")
                     .split(",")
@@ -117,34 +120,32 @@ class HomeKitServer(val settings: Settings) {
                 val toReturn = mutableListOf<CharacteristicResponse>()
                 ids.forEach { (aid, pairs) ->
                     val accessory = accessoryStorage[aid]
-                    val isReachable = accessory.isReachable
                     pairs.forEach { (_, iid) ->
                         val characteristic = accessory[iid]
-                        val status = if (isReachable) StatusCodes.Success else StatusCodes.UnableToPerform
-                        toReturn.add(CharacteristicResponse(aid, iid, characteristic.value, status = status.value))
+                        toReturn.add(CharacteristicResponse(aid, iid, characteristic.value, status = StatusCodes.Success.value))
                     }
                 }
                 HttpResponse(207, data = ("{ \"characteristics\" : ${appleGson.toJson(toReturn)} }").toByteArray())
             }
-            path == "/pairings" && method == HttpMethod.POST -> Pairings.handleRequest(session, pairings, httpRequest.content)
             path == "/event" && method == HttpMethod.GET -> {
                 if (query == null) throw Exception("Query missing for event!")
                 session.shouldClose = true
                 session.sendMessage(HttpResponse(200), false)
                 // TODO multiple characteristics!
-                val split = query.replace("?characteristics=", "").split(":")
+                val split = query.replace("characteristics=", "").split(":")
                 val aid = split[0].toInt()
                 val accessory = accessoryStorage[aid]
+                val sessionsToSendTo = mutableSetOf<Session>()
                 val iids = split[1].split(",").map {
                     val characteristic = accessory[it.toLong()]
+                    sessionsToSendTo.addAll(characteristic.subscribedSessions)
                     CharacteristicResponse(aid, characteristic.iid, characteristic.value)
                 }
                 val httpResponse = HttpResponse(type = ResponseType.Event, data = appleGson.toJson(CharacteristicsResponse(iids)).toByteArray())
-                liveSessions.forEach {
-                    if (it.isSecure) {
-                        Logger.info("Sending event to [${it.currentController.identifier}]!")
-                        it.sendMessage(httpResponse)
-                    }
+
+                sessionsToSendTo.forEach {
+                    Logger.info("Sending event to [${it.currentController.identifier}]!")
+                    it.sendMessage(httpResponse)
                 }
                 null
             }
@@ -152,16 +153,5 @@ class HomeKitServer(val settings: Settings) {
         }
         return response
     }
-
-}
-
-class Configuration {
-
-    @Expose
-    @SerializedName("accessories")
-    val accessoryData: List<Map<String, Any>> = emptyList()
-
-    internal infix fun Map<String, Any>.getString(name: String) = get(name) as? String ?: throw Exception("Map does not contain the key.")
-    internal infix fun Map<String, Any>.getInteger(name: String) = (get(name) as? Double)?.toInt() ?: throw Exception("Map does not contain the key.")
 
 }

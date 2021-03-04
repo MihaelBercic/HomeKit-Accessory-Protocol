@@ -42,13 +42,14 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
 
     }
 
+    private val actions = mutableMapOf<String, Any>()
     val executor = Executors.newSingleThreadScheduledExecutor()
-    var toSend: ScheduledFuture<out Any>? = null
+    var scheduledFuture: ScheduledFuture<out Any>? = null
 
     override fun commitChanges(changeRequests: List<ChangeRequest>) {
         val query = actions.map { "${it.key}=${it.value}" }.joinToString("&")
-        toSend?.cancel(true)
-        toSend = executor.schedule({ URL("http://$ip/roller/0?$query").readText() }, 1000, TimeUnit.MILLISECONDS)
+        scheduledFuture?.cancel(true)
+        scheduledFuture = executor.schedule({ URL("http://$ip/roller/0?$query").readText() }, 1000, TimeUnit.MILLISECONDS)
         actions.clear()
     }
 

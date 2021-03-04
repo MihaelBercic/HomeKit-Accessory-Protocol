@@ -8,7 +8,6 @@ import homekit.communication.Session
 import homekit.communication.structure.data.Pairing
 import homekit.communication.structure.data.PairingStorage
 import homekit.tlv.*
-import homekit.tlv.structure.*
 
 /**
  * Created by Mihael Valentin Berčič

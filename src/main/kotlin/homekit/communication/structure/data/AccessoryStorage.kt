@@ -1,7 +1,9 @@
 package homekit.communication.structure.data
 
 import com.google.gson.annotations.Expose
+import homekit.communication.HttpResponse
 import homekit.structure.Accessory
+import utils.appleGson
 import utils.gson
 import java.io.File
 
@@ -27,6 +29,8 @@ class AccessoryStorage(bridge: Accessory) {
     init {
         addAccessory(bridge)
     }
+
+    fun createHttpResponse() = HttpResponse(data = appleGson.toJson(this).toByteArray())
 }
 
 class Pairing(@Expose val identifier: String, @Expose val publicKey: ByteArray, @Expose var isAdmin: Boolean)

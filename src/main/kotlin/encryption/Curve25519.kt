@@ -1,6 +1,6 @@
 package encryption
 
-import asBigInteger
+import utils.asBigInteger
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.interfaces.XECPrivateKey

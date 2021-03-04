@@ -1,10 +1,10 @@
 package encryption
 
-import asBigInteger
-import asByteArray
-import hash
-import padded
-import xor
+import utils.asBigInteger
+import utils.asByteArray
+import utils.hash
+import utils.padded
+import utils.xor
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.SecureRandom

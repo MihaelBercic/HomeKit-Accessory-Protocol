@@ -1,7 +1,7 @@
 package mdns.packet
 
 import mdns.Packet
-import minimumBytes
+import utils.minimumBytes
 import java.net.DatagramPacket
 import java.net.InetAddress
 import java.nio.ByteBuffer

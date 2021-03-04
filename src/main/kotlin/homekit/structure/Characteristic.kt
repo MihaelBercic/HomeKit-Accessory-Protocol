@@ -1,7 +1,7 @@
 package homekit.structure
 
 import com.google.gson.annotations.Expose
-import homekit.communication.LiveSessions
+import homekit.communication.LiveSessions.isCurrentSessionSubscribed
 import homekit.communication.structure.CharacteristicType
 import homekit.communication.structure.Format
 
@@ -29,7 +29,7 @@ class Characteristic(value: Any? = null, @Expose val type: CharacteristicType, @
     val maxLen: Any? = null
 
     @Expose
-    var ev = LiveSessions.registeredEvents[Thread.currentThread()]?.contains(iid) ?: false
+    var ev: Boolean = isCurrentSessionSubscribed
 
     @Expose
     var value: Any? = value
@@ -54,8 +54,6 @@ class Characteristic(value: Any? = null, @Expose val type: CharacteristicType, @
         }
 
     var previousValue: Any? = null
-    var supportsEvents = false
-
     private fun revert() {
         value = previousValue
     }

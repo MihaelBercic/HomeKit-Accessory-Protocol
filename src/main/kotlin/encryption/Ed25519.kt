@@ -1,7 +1,7 @@
 package encryption
 
-import asBigInteger
-import asByteArray
+import utils.asBigInteger
+import utils.asByteArray
 import java.io.File
 import java.security.KeyFactory
 import java.security.KeyPairGenerator

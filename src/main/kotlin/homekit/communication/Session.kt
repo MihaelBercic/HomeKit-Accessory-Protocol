@@ -5,10 +5,13 @@ import encryption.HKDF
 import encryption.SRP
 import homekit.Constants
 import homekit.HomeKitServer
+import homekit.communication.LiveSessions.removeFromLiveSessions
+import homekit.communication.LiveSessions.secureSessionStarted
 import homekit.communication.structure.data.Pairing
 import utils.Logger
 import java.io.InputStream
 import java.net.Socket
+import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -24,6 +27,7 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
     var shouldClose = false
     val srp = SRP()
     var currentState: Int = 1
+    val remoteSocketAddress: SocketAddress = socket.remoteSocketAddress
     private var controllerToAccessoryCount: Long = 0
     private var accessoryToControllerCount: Long = 0
     lateinit var currentController: Pairing
@@ -64,15 +68,12 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
                     val headers = parseHeaders(decryptedContent)
                     HttpRequest(headers, decryptedContent.takeLast(headers.contentLength).toByteArray())
                 }
-
-                request.headers.apply {
-                    Logger.trace("${Logger.green}${socket.remoteSocketAddress}${Logger.reset} [${Logger.red}$httpMethod${Logger.reset}] $path ${Logger.magenta}$query${Logger.reset} ${String(request.content)}")
-                }
                 homeKitServer.handle(request, this).apply { if (this == null) println("Null response for ${request.headers}") }?.apply { sendMessage(this, shouldEncrypt) }
                 if (shouldClose) close()
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            Logger.error("Closing the session due to an exception.")
             close()
         }
     }
@@ -80,12 +81,10 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
     private fun close() {
         Logger.error("Input stream has let us know it is closed. Shutting this session down.")
         shouldClose = true
-        homeKitServer.liveSessions.remove(this)
-        socket.shutdownInput()
-        socket.shutdownOutput()
         inputStream.close()
         outputStream.close()
         socket.close()
+        removeFromLiveSessions()
     }
 
     fun sendMessage(response: Response, encrypt: Boolean = true) {
@@ -95,7 +94,6 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
 
     fun setSharedSecret(sharedSecret: ByteArray) {
         this.sharedSecret = sharedSecret
-        homeKitServer.liveSessions.add(this)
         controllerToAccessoryCount = 0
         accessoryToControllerCount = 0
         Constants.apply {
@@ -103,6 +101,7 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
             accessoryToControllerKey = HKDF.compute("HMACSHA512", sharedSecret, controlSalt, accessoryKeyInfo, 32)
             controllerToAccessoryKey = HKDF.compute("HMACSHA512", sharedSecret, controlSalt, controllerKeyInfo, 32)
         }
+        secureSessionStarted()
     }
 
     private fun encodeIntoFrames(response: Response): ByteArray {
@@ -147,7 +146,7 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
     }
 
     private fun parseHeaders(byteArray: ByteArray): HttpHeaders {
-        val headers = String(byteArray)//.apply { Logger.info(this) }
+        val headers = String(byteArray)
         val infoMatcher = httpInfoPattern.matcher(headers).apply { find() }
         val lengthMatcher = contentLengthPattern.matcher(headers)
         val contentLength = if (lengthMatcher.find()) lengthMatcher.group("length").toInt() else 0
@@ -155,7 +154,7 @@ class Session(private val socket: Socket, private val homeKitServer: HomeKitServ
         val requestedPath = infoMatcher.group("path")
         if (httpMethod == null || requestedPath == null) throw Exception("Invalid http request.")
         val requestedMethod = HttpMethod.valueOf(httpMethod)
-        val query = infoMatcher.group("query")?.replace("?id=", "")
+        val query = infoMatcher.group("query")?.drop(1)
         return HttpHeaders(requestedMethod, requestedPath, query, contentLength)
     }
 }

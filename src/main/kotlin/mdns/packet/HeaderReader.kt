@@ -1,6 +1,6 @@
 package mdns.packet
 
-import bits
+import utils.bits
 import mdns.Header
 import java.nio.ByteBuffer
 

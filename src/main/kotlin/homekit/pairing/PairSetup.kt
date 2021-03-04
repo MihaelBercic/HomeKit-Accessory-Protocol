@@ -1,7 +1,7 @@
 package homekit.pairing
 
-import asBigInteger
-import asByteArray
+import utils.asBigInteger
+import utils.asByteArray
 import encryption.ChaCha
 import encryption.Ed25519
 import encryption.HKDF
@@ -15,6 +15,7 @@ import homekit.communication.structure.data.PairingStorage
 import homekit.tlv.TLVItem
 import homekit.tlv.TLVPacket
 import homekit.tlv.TLVValue
+import utils.Logger
 import java.nio.ByteBuffer
 import java.util.*
 
