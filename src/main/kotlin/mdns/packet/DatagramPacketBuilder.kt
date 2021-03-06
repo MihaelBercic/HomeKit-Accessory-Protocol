@@ -1,6 +1,5 @@
 package mdns.packet
 
-import mdns.Packet
 import utils.minimumBytes
 import java.net.DatagramPacket
 import java.net.InetAddress
@@ -12,7 +11,7 @@ import java.util.*
  * on 21/12/2020 at 16:59
  * using IntelliJ IDEA
  */
-class DatagramPacketBuilder(private val packet: Packet) {
+class DatagramPacketBuilder(private val packet: MulticastDnsPacket) {
 
     private val header = packet.header
 

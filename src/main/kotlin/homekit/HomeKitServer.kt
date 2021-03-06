@@ -36,26 +36,29 @@ class HomeKitServer(val settings: Settings) {
             configurationNumber++
             save()
         }
-        readOrCompute("config.json") { Configuration() }.apply {
-            accessoryData.forEach { data ->
-                val accessoryIP = data getString "ip"
-                val accessoryType = data getString "type"
-                val aid = data getInteger "id"
-                if (aid <= 1 || accessoryStorage.contains(aid)) throw Exception("Accessory ID should be larger than 1 and unique!")
-                val accessory = when (accessoryType) {
-                    "Light" -> ShellyBulb(aid, accessoryIP)
-                    "ShellySwitch" -> ShellySwitch(aid, accessoryIP)
-                    else -> throw Exception("Accessory type of $accessoryType is not supported.")
-                }
-                accessory.setup(data)
-                accessoryStorage.addAccessory(accessory)
-                Logger.debug("Successfully registered $accessoryIP with aid $aid and type $accessoryType.")
+
+        readOrCompute("config.json") { Configuration() }.accessoryData.forEach { data ->
+            val ip = data.asString("ip") { "IP is required for each accessory!" }
+            val type = data.asString("type") { "Accessory type has to be specified for each accessory!" }
+            val id = data.asInt("id") { "A unique Accessory ID (aid) has to be specified for each accessory!" }
+
+            if (id <= 1 || accessoryStorage.contains(id)) {
+                throw Exception("Accessory ID should be larger than 1 and unique!")
             }
+
+            val accessory = when (type) {
+                "Light" -> ShellyBulb(id, ip)
+                "ShellySwitch" -> ShellySwitch(id, ip)
+                else -> throw Exception("Accessory type of $type is not supported.")
+            }
+
+            accessory.setup(data)
+            accessoryStorage.addAccessory(accessory)
+            Logger.debug("Successfully registered $ip with aid $id and type $type.")
         }
         Thread {
             ServerSocket(settings.port).apply {
                 soTimeout = 0
-                Logger.info("Started our server...")
                 while (isRunning) {
                     val newSocket = accept().apply {
                         soTimeout = 0
@@ -65,6 +68,7 @@ class HomeKitServer(val settings: Settings) {
                 }
             }
         }.start()
+        Logger.info("Started our server...")
     }
 
     fun handle(httpRequest: HttpRequest, session: Session): Response? {
@@ -72,9 +76,7 @@ class HomeKitServer(val settings: Settings) {
         val method = headers.httpMethod
         val path = headers.path
         val query = headers.query
-        Logger.apply {
-            debug("$green${session.remoteSocketAddress}$reset [$magenta$method$reset] $path $yellow$query$reset")
-        }
+        Logger.apply { debug("$green${session.remoteSocketAddress}$reset [$magenta$method$reset] $path $yellow$query$reset") }
         val response = when {
             path == "/pair-setup" && method == HttpMethod.POST -> PairSetup.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pair-verify" && method == HttpMethod.POST -> PairVerify.handleRequest(settings, pairings, session, httpRequest.content)
@@ -154,4 +156,6 @@ class HomeKitServer(val settings: Settings) {
         return response
     }
 
+    private fun Map<String, Any>.asString(key: String, orThrow: () -> String) = this[key] as? String ?: throw Exception(orThrow())
+    private fun Map<String, Any>.asInt(key: String, orThrow: () -> String) = (this[key] as? Double)?.toInt() ?: throw Exception(orThrow())
 }

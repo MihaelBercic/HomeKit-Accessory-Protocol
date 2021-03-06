@@ -1,8 +1,11 @@
 package mdns.packet
 
-import mdns.Packet
-import mdns.records.*
+import mdns.records.ARecord
+import mdns.records.PTRRecord
+import mdns.records.SRVRecord
+import mdns.records.TXTRecord
 import mdns.records.structure.CompleteRecord
+import mdns.records.structure.IncompleteRecord
 import mdns.records.structure.RecordType
 import java.net.DatagramPacket
 import java.nio.ByteBuffer
@@ -17,23 +20,18 @@ class PacketReader(datagramPacket: DatagramPacket) {
     private data class RecordInformation(val label: String, val type: RecordType, val classCode: Int, val hasProperty: Boolean)
 
     private val buffer = ByteBuffer.wrap(datagramPacket.data)
-    private val header = HeaderReader(buffer).readHeader()
+    private val header = MulticastDnsHeaderReader(buffer).readHeader()
 
     private val questionCount = buffer.short
     private val answerCount = buffer.short
     private val authorityCount = buffer.short
     private val additionalCount = buffer.short
 
-    fun buildPacket(): Packet {
-        val packet = Packet(header)
-        for (i in 0 until questionCount) readRecordInformation().apply {
-            if (classCode == 1) packet.queryRecords.add(QueryRecord(label, type, hasProperty))
-        }
-
-        for (i in 0 until answerCount) parseCompleteRecord(packet.answerRecords)
-        for (i in 0 until authorityCount) parseCompleteRecord(packet.authorityRecords)
-        for (i in 0 until additionalCount) parseCompleteRecord(packet.additionalRecords)
-        return packet
+    fun buildPacket(): MulticastDnsPacket = MulticastDnsPacket(header).apply {
+        for (i in 0 until questionCount) queryRecords.add(parseIncompleteRecord())
+        for (i in 0 until answerCount) answerRecords.add(parseCompleteRecord())
+        for (i in 0 until authorityCount) authorityRecords.add(parseCompleteRecord())
+        for (i in 0 until additionalCount) additionalRecords.add(parseCompleteRecord())
     }
 
     private fun readRecordInformation(): RecordInformation {
@@ -72,27 +70,26 @@ class PacketReader(datagramPacket: DatagramPacket) {
         return String(characters.toByteArray())
     }
 
-    private fun parseCompleteRecord(list: MutableList<CompleteRecord>) {
+    private fun parseIncompleteRecord(): IncompleteRecord {
         val info = readRecordInformation()
         val label = info.label
         val type = info.type
-        if (info.classCode != 1) return
+        return IncompleteRecord(label, type, info.hasProperty)
+    }
+
+    private fun parseCompleteRecord(): CompleteRecord {
+        val info = readRecordInformation()
+        val label = info.label
+        val type = info.type
+        val isCached = info.hasProperty
         val timeToLive = buffer.int
-        val dataLength = buffer.short
-        val record = when (type) {
-            RecordType.A -> ARecord(label)
-            RecordType.PTR -> PTRRecord(label)
-            RecordType.TXT -> TXTRecord(label)
-            RecordType.SRV -> SRVRecord(label)
-            else -> null
+        val dataLength = buffer.short.toInt()
+        return when (type) {
+            RecordType.A -> ARecord(label, timeToLive, dataLength, buffer, isCached)
+            RecordType.PTR -> PTRRecord(label, timeToLive, dataLength, buffer, isCached)
+            RecordType.TXT -> TXTRecord(label, timeToLive, dataLength, buffer, isCached)
+            RecordType.SRV -> SRVRecord(label, timeToLive, dataLength, buffer, isCached)
+            else -> CompleteRecord(label, RecordType.Unsupported, isCached, timeToLive)
         }
-        record?.apply {
-            hasProperty = info.hasProperty
-            readData(buffer)
-            list.add(this)
-        }
-        // Logger.error("Skipping over for $dataLength")
-        buffer.position(buffer.position() + dataLength)
-        // Logger.debug("Record read: [${record?.type}] ${record?.label}")
     }
 }

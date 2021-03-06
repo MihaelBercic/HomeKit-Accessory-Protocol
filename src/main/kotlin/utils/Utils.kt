@@ -2,8 +2,10 @@ package utils
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import mdns.packet.PacketReader
 import java.io.File
 import java.math.BigInteger
+import java.net.DatagramPacket
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
@@ -131,3 +133,4 @@ fun urlRequest(type: NetworkRequestType, url: String, body: Any, customBlock: Ht
 
 val gson: Gson = GsonBuilder().create()
 val appleGson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
+val DatagramPacket.asPacket get() = PacketReader(this).buildPacket()

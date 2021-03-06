@@ -6,4 +6,4 @@ import homekit.tlv.TLVItem
 import homekit.tlv.TLVPacket
 import homekit.tlv.TLVValue
 
-class TLVErrorResponse(state: Byte, error: TLVError) : Response(TLVPacket(TLVItem(TLVValue.State, state), TLVItem(TLVValue.Error, error.code)).toByteArray())
+class TLVErrorResponse(state: Byte, error: TLVError) : Response(TLVPacket(TLVItem(TLVValue.State, state), TLVItem(TLVValue.Error, error.code)).asByteArray)

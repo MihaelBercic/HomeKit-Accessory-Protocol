@@ -60,7 +60,7 @@ object PairVerify {
             TLVItem(TLVValue.Identifier, *serverMACArray),
             TLVItem(TLVValue.Signature, *infoSignature)
         )
-        val subArray = subTlv.toByteArray()
+        val subArray = subTlv.asByteArray
         val subBuffer = ByteBuffer.allocate(12 + subArray.size).apply {
             position(4)
             put("PV-Msg02".toByteArray())
@@ -75,7 +75,7 @@ object PairVerify {
         )
 
         session.currentState = 3
-        return HttpResponse(contentType = contentType, data = responsePacket.toByteArray())
+        return HttpResponse(contentType = contentType, data = responsePacket.asByteArray)
     }
 
     private fun verifyDeviceInformation(pairings: PairingStorage, session: Session, encryptedItem: TLVItem): Response {
@@ -96,7 +96,7 @@ object PairVerify {
             currentState = 1
             isSecure = true
         }
-        return HttpResponse(contentType = contentType, data = TLVPacket(TLVItem(TLVValue.State, 0x04)).toByteArray())
+        return HttpResponse(contentType = contentType, data = TLVPacket(TLVItem(TLVValue.State, 0x04)).asByteArray)
     }
 
 }

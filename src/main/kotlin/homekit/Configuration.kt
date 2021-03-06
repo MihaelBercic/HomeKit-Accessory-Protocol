@@ -12,4 +12,5 @@ class Configuration {
     internal infix fun Map<String, Any>.getString(name: String) = get(name) as? String ?: throw Exception("Map does not contain the key.")
     internal infix fun Map<String, Any>.getInteger(name: String) = (get(name) as? Double)?.toInt() ?: throw Exception("Map does not contain the key.")
 
+
 }

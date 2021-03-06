@@ -1,7 +1,6 @@
 package mdns.packet
 
 import utils.bits
-import mdns.Header
 import java.nio.ByteBuffer
 
 /**
@@ -9,9 +8,9 @@ import java.nio.ByteBuffer
  * on 21/12/2020 at 16:51
  * using IntelliJ IDEA
  */
-class HeaderReader(private val buffer: ByteBuffer) {
+class MulticastDnsHeaderReader(private val buffer: ByteBuffer) {
 
-    fun readHeader(): Header {
+    fun readHeader(): MulticastDnsPacketHeader {
         val id = buffer.short
         val flags = buffer.short.toInt()
         val isResponse = flags.bits(15, 1) == 1
@@ -22,7 +21,7 @@ class HeaderReader(private val buffer: ByteBuffer) {
         val isRecursionAvailable = flags.bits(7, 1) == 1
         val responseCode = flags.bits(0, 4)
 
-        return Header(id, isResponse, opcode, isAuthoritative, isTruncated, isRecursionDesired, isRecursionAvailable, responseCode)
+        return MulticastDnsPacketHeader(id, isResponse, opcode, isAuthoritative, isTruncated, isRecursionDesired, isRecursionAvailable, responseCode)
     }
 
 }

@@ -8,14 +8,18 @@ import java.nio.ByteBuffer
  * Created by Mihael Valentin Berčič
  * on 20/12/2020 at 22:43
  * using IntelliJ IDEA
+ *
+ * I believe these classes could have been done much more effectively and clean, but I wasn't able to come up with a
+ * solid solution. Yet.
  */
-
-
-class TXTRecord(override val label: String, block: MutableMap<Any, Any>.() -> Unit = {}) : CompleteRecord() {
+class TXTRecord(label: String, isCached: Boolean, timeToLive: Int, block: MutableMap<Any, Any>.() -> Unit = {}) : CompleteRecord(label, RecordType.TXT, isCached, timeToLive) {
 
     val dataMap: MutableMap<Any, Any> = mutableMapOf<Any, Any>().apply(block)
     private val cleanupRegex = "[(,\\s){}]".toRegex()
-    override val type = RecordType.TXT
+
+    constructor(label: String, timeToLive: Int, dataLength: Int, buffer: ByteBuffer, isCached: Boolean) : this(label, isCached, timeToLive) {
+        readData(dataLength, buffer)
+    }
 
     override fun writeData(buffer: ByteBuffer) {
         val dataLength = dataMap.size + dataMap.toString().replace(cleanupRegex, "").length

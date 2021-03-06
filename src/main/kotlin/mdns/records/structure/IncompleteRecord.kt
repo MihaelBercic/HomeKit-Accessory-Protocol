@@ -9,10 +9,7 @@ import java.util.*
  * on 20/12/2020 at 22:45
  * using IntelliJ IDEA
  */
-abstract class IncompleteRecord {
-    abstract val label: String
-    abstract val type: RecordType
-    open var hasProperty: Boolean = false
+open class IncompleteRecord(val label: String, val type: RecordType, val hasProperty: Boolean = false) {
 
     infix fun String.encodeLabelInto(byteBuffer: ByteBuffer) = split(".").forEach {
         byteBuffer.put(it.length.toByte())

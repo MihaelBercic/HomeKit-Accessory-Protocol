@@ -7,12 +7,14 @@ import java.nio.ByteOrder
  * Created by Mihael Valentin Berčič
  * on 26/12/2020 at 01:20
  * using IntelliJ IDEA
+ *
+ * This class is used to store multiple [TLVItem] in a single packet.
+ *
+ * The class conforms to the specifications in HAP-Specification released by Apple.
  */
 class TLVPacket {
 
     private val items: MutableList<TLVItem> = mutableListOf()
-
-    operator fun get(tlvValue: TLVValue) = items.firstOrNull { it.identifier == tlvValue } ?: throw Exception("No $tlvValue in this packet.")
 
     constructor(vararg items: TLVItem) {
         this.items.addAll(items)
@@ -22,7 +24,9 @@ class TLVPacket {
         items.addAll(parseTLV(byteArray))
     }
 
-    fun toByteArray(): ByteArray = ByteBuffer.allocate(items.sumBy { it.totalLength }).apply { items.forEach { it.writeData(this) } }.array()
+    val asByteArray: ByteArray get() = ByteBuffer.allocate(items.sumBy { it.totalLength }).apply { items.forEach { it.writeData(this) } }.array()
+
+    operator fun get(tlvValue: TLVValue) = items.firstOrNull { it.identifier == tlvValue } ?: throw Exception("No $tlvValue in this packet.")
 
 
     private fun parseTLV(byteArray: ByteArray): List<TLVItem> {

@@ -8,18 +8,18 @@ import java.nio.ByteBuffer
  * Created by Mihael Valentin Berčič
  * on 20/12/2020 at 22:43
  * using IntelliJ IDEA
+ *
+ * I believe these classes could have been done much more effectively and clean, but I wasn't able to come up with a
+ * solid solution. Yet.
  */
+class PTRRecord(label: String, domain: String, isCached: Boolean, timeToLive: Int) : CompleteRecord(label, RecordType.PTR, isCached, timeToLive) {
 
+    var domain: String = domain
+        private set
 
-class PTRRecord(override var label: String, block: PTRRecord.() -> Unit = {}) : CompleteRecord() {
-
-    init {
-        apply(block)
+    constructor(label: String, timeToLive: Int, dataLength: Int, buffer: ByteBuffer, isCached: Boolean) : this(label, "ToBeRead", isCached, timeToLive) {
+        readData(dataLength, buffer)
     }
-
-    lateinit var domain: String
-
-    override val type = RecordType.PTR
 
     override fun writeData(buffer: ByteBuffer) {
         val split = domain.split(".")

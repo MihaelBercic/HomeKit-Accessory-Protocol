@@ -1,6 +1,8 @@
 package mdns
 
+import mdns.packet.MulticastDnsPacket
 import utils.Logger
+import utils.asPacket
 import java.net.*
 
 
@@ -16,13 +18,12 @@ abstract class MulticastService(val protocol: String, val localhost: InetAddress
     private val inetSocketAddress = InetSocketAddress(destination, mDNS)
     private val myNetworkInterface = NetworkInterface.getByInetAddress(localhost)
 
-    abstract fun condition(packet: Packet): Boolean
-    abstract fun respond(socket: MulticastSocket, datagramPacket: DatagramPacket, packet: Packet)
+    abstract fun condition(packet: MulticastDnsPacket): Boolean
+    abstract fun respond(socket: MulticastSocket, datagramPacket: DatagramPacket, packet: MulticastDnsPacket)
 
-    open val wakeUpPacket: Packet? = null
+    open val wakeUpPacket: MulticastDnsPacket? = null
 
     fun startAdvertising() {
-        Logger.info("Starting service advertising!")
         MulticastSocket(mDNS).apply {
             timeToLive = 255
             joinGroup(inetSocketAddress, myNetworkInterface)
@@ -44,6 +45,7 @@ abstract class MulticastService(val protocol: String, val localhost: InetAddress
                 }
             }.start()
         }
+        Logger.info("Advertising $protocol service has started!")
     }
 
 }

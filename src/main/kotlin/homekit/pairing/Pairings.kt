@@ -43,7 +43,7 @@ object Pairings {
             if (!encodedAdditionalPublicKey.contentEquals(existingPairing.publicKey)) return TLVErrorResponse(2, TLVError.Unknown)
             existingPairing.isAdmin = isAdmin
         } else pairings.addPairing(Pairing(additionalIdentifier, encodedAdditionalPublicKey, isAdmin))
-        return Response(TLVPacket(TLVItem(TLVValue.State, 2)).toByteArray())
+        return Response(TLVPacket(TLVItem(TLVValue.State, 2)).asByteArray)
     }
 
     private fun removePairing(pairingStorage: PairingStorage, session: Session, packet: TLVPacket): Response {
@@ -55,7 +55,7 @@ object Pairings {
         if (!isAdmin) return TLVErrorResponse(2, TLVError.Authentication)
         pairingStorage.removePairing(identifier)
         session.shouldClose = true
-        return Response(TLVPacket(TLVItem(TLVValue.State, 2)).toByteArray())
+        return Response(TLVPacket(TLVItem(TLVValue.State, 2)).asByteArray)
     }
 
     private fun listPairings(pairingStorage: PairingStorage): Response {
@@ -67,7 +67,7 @@ object Pairings {
                 TLVItem(TLVValue.Permissions, if (pairing.isAdmin) 1 else 0)
             )
         }.flatten()
-        return Response(TLVPacket(state, *items.toTypedArray()).toByteArray())
+        return Response(TLVPacket(state, *items.toTypedArray()).asByteArray)
     }
 
 

@@ -8,21 +8,36 @@ import java.nio.ByteBuffer
  * Created by Mihael Valentin Berčič
  * on 20/12/2020 at 22:43
  * using IntelliJ IDEA
+ *
+ * I believe these classes could have been done much more effectively and clean, but I wasn't able to come up with a
+ * solid solution. Yet.
  */
+class SRVRecord(
+    label: String,
+    target: String,
+    port: Int = 80,
+    priority: Int = 0,
+    weight: Int = 0,
+    timeToLive: Int,
+    isCached: Boolean
+) : CompleteRecord(label, RecordType.SRV, isCached, timeToLive) {
 
+    var port: Int = port
+        private set
 
-class SRVRecord(override val label: String, block: SRVRecord.() -> Unit = {}) : CompleteRecord() {
+    var priority: Int = priority
+        private set
 
-    var port: Int = 0
-    private var priority: Int = 0
-    private var weight: Int = 0
-    lateinit var target: String
-    override val type = RecordType.SRV
+    var weight: Int = weight
+        private set
 
-    init {
-        apply(block)
+    var target: String = target
+        private set
+
+    constructor(label: String, timeToLive: Int, dataLength: Int, buffer: ByteBuffer, isCached: Boolean) :
+            this(label, "ToBeRead", timeToLive = timeToLive, isCached = isCached) {
+        readData(dataLength, buffer)
     }
-
 
     override fun writeData(buffer: ByteBuffer) {
         buffer.apply {

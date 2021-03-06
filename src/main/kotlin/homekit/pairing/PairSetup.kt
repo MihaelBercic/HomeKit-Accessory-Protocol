@@ -57,7 +57,7 @@ object PairSetup {
             TLVItem(TLVValue.PublicKey, *publicKey.asByteArray)
         )
         session.currentState = 3
-        return HttpResponse(contentType = contentType, data = responsePacket.toByteArray())
+        return HttpResponse(contentType = contentType, data = responsePacket.asByteArray)
     }
 
     private fun verifyDeviceProof(session: Session, packet: TLVPacket): Response {
@@ -75,7 +75,7 @@ object PairSetup {
         )
         session.currentState = 5
         Logger.trace("Responding with response packet!")
-        return HttpResponse(contentType = contentType, data = responsePacket.toByteArray())
+        return HttpResponse(contentType = contentType, data = responsePacket.asByteArray)
     }
 
     private fun decryptPublicInformation(settings: Settings, pairings: PairingStorage, session: Session, encryptedItem: TLVItem): HttpResponse {
@@ -121,7 +121,7 @@ object PairSetup {
             TLVItem(TLVValue.PublicKey, *encodedPublicKey),
             TLVItem(TLVValue.Signature, *Ed25519.sign(accessoryKeyPair.privateKey, accessoryInfo))
         )
-        val subPacketArray = subPacket.toByteArray()
+        val subPacketArray = subPacket.asByteArray
         val encryptionBuffer = ByteBuffer.allocate(12 + subPacketArray.size).apply {
             position(4)
             put("PS-Msg06".toByteArray())
@@ -136,7 +136,7 @@ object PairSetup {
 
         val controllerIdentifier = String(deviceIdentifier)
         pairings.addPairing(Pairing(controllerIdentifier, Ed25519.encode(deviceEdPublicKey), true))
-        return HttpResponse(contentType = contentType, data = responsePacket.toByteArray())
+        return HttpResponse(contentType = contentType, data = responsePacket.asByteArray)
     }
 
     private fun generatePin(): String {
