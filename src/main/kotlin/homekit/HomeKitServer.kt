@@ -38,9 +38,9 @@ class HomeKitServer(val settings: Settings) {
         }
 
         readOrCompute("config.json") { Configuration() }.accessoryData.forEach { data ->
-            val ip = data.asString("ip") { "IP is required for each accessory!" }
-            val type = data.asString("type") { "Accessory type has to be specified for each accessory!" }
-            val id = data.asInt("id") { "A unique Accessory ID (aid) has to be specified for each accessory!" }
+            val ip = data.require<String>("ip") { "IP is required for each accessory!" }
+            val type = data.require<String>("type") { "Accessory type has to be specified for each accessory!" }
+            val id = data.require<Int>("id") { "A unique Accessory ID (aid) has to be specified for each accessory!" }
 
             if (id <= 1 || accessoryStorage.contains(id)) {
                 throw Exception("Accessory ID should be larger than 1 and unique!")
@@ -98,11 +98,10 @@ class HomeKitServer(val settings: Settings) {
                                 if (it.events) session.subscribeFor(characteristic) else session.unsubscribeFrom(characteristic)
                                 0
                             }
-                            it.value != null -> {
+                            else -> {
                                 characteristic.value = it.value
                                 0
                             }
-                            else -> 0
                         }
                         Logger.info(it)
                         responses.add("{\"aid\": $aid, \"iid\":$iid, \"status\": $status}")
@@ -156,6 +155,11 @@ class HomeKitServer(val settings: Settings) {
         return response
     }
 
-    private fun Map<String, Any>.asString(key: String, orThrow: () -> String) = this[key] as? String ?: throw Exception(orThrow())
-    private fun Map<String, Any>.asInt(key: String, orThrow: () -> String) = (this[key] as? Double)?.toInt() ?: throw Exception(orThrow())
+    private inline fun <reified T> Map<String, Any>.require(key: String, message: () -> String): T {
+        val value = this[key] ?: throw Exception(message())
+        return when (T::class) {
+            Int::class -> (value as Double).toInt() as T
+            else -> value as T
+        }
+    }
 }

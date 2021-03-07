@@ -8,11 +8,13 @@ import java.net.InetAddress
 
 fun main() {
     val settings = readOrCompute("settings.json") { Settings(1, 3000, generateMAC()) }
+
     InetAddress.getLocalHost().apply {
-        if(isLoopbackAddress) {
+        if (isLoopbackAddress) {
             throw Exception("$this is a loopback address! We can not advertise a loopback address.")
         }
     }
+
     HomeKitServer(settings).start()
     HomeKitService(settings).startAdvertising()
 }

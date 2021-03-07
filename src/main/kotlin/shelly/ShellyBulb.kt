@@ -36,7 +36,7 @@ class ShellyBulb(aid: Int, ip: String) : Accessory(aid, ip) {
             }
 
             addCharacteristic(CharacteristicType.Brightness, status.brightness) {
-                if (value != null) actions["brightness"] = value!!
+                if (value != null && (value as Int) > 0) actions["brightness"] = value!!
             }
 
         }
@@ -46,6 +46,7 @@ class ShellyBulb(aid: Int, ip: String) : Accessory(aid, ip) {
         if (actions.isNotEmpty()) {
             val toSend = actions.map { (key, value) -> "$key=$value" }.joinToString("&")
             actions.clear()
+            Logger.info("Sending $toSend to our light!")
 
             scheduledFuture?.cancel(true)
             scheduledFuture = executor.schedule({ URL("http://$ip/light/0?$toSend").readText() }, 250, TimeUnit.MILLISECONDS)

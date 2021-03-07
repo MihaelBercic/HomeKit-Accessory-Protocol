@@ -22,7 +22,7 @@ abstract class Accessory(@Expose val aid: Int, val ip: String = "") {
         services.add(this)
     }
 
-    fun sendRequest(type: NetworkRequestType, path: String, body: String = "") = urlRequest(type, "http://$ip$path", body)
+    fun sendRequest(type: NetworkRequestType, path: String, body: String = "", callback: (code: Int, body: String) -> Unit = { _, _ -> }) = urlRequest(type, "http://$ip$path", body, callback)
 
     operator fun get(iid: Long) = mappedCharacteristics[iid] ?: throw Exception("This characteristic does not exist.")
 

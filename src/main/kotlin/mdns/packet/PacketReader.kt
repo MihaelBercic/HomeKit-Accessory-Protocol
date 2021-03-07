@@ -89,7 +89,9 @@ class PacketReader(datagramPacket: DatagramPacket) {
             RecordType.PTR -> PTRRecord(label, timeToLive, dataLength, buffer, isCached)
             RecordType.TXT -> TXTRecord(label, timeToLive, dataLength, buffer, isCached)
             RecordType.SRV -> SRVRecord(label, timeToLive, dataLength, buffer, isCached)
-            else -> CompleteRecord(label, RecordType.Unsupported, isCached, timeToLive)
+            else -> CompleteRecord(label, RecordType.Unsupported, isCached, timeToLive).apply {
+                buffer.position(buffer.position() + dataLength)
+            }
         }
     }
 }

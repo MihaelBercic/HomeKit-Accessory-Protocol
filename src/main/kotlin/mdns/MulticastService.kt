@@ -45,7 +45,7 @@ abstract class MulticastService(val protocol: String, val localhost: InetAddress
                 }
             }.start()
         }
-        Logger.info("Advertising $protocol service has started!")
+        Logger.info("Advertising $protocol service has started on $localhost!")
     }
 
 }

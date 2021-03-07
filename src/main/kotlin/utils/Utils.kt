@@ -96,14 +96,12 @@ enum class NetworkRequestType {
 }
 
 
-fun urlRequest(type: NetworkRequestType, url: String, body: Any, customBlock: HttpURLConnection.() -> Unit = {}): Pair<Int, ByteArray> {
+fun urlRequest(type: NetworkRequestType, url: String, body: Any, callback: (code: Int, response: String) -> Unit = { _, _ -> }) {
     val connection = (URL(url).openConnection() as HttpURLConnection)
     try {
         connection.requestMethod = type.name
-        connection.apply(customBlock) // Customization
         connection.doOutput = true
         connection.doInput = true
-        connection.connectTimeout = 2000
         connection.connect()
         val outputStream = connection.outputStream
         val inputStream = connection.inputStream
@@ -116,13 +114,13 @@ fun urlRequest(type: NetworkRequestType, url: String, body: Any, customBlock: Ht
         outputStream.close()
         inputStream.close()
         connection.disconnect()
-        return connection.responseCode to response
+        callback(connection.responseCode, String(response))
     } catch (e: Exception) {
-        Logger.error("URL error to $url $e")
+        Logger.error("URL error to $url")
+        e.printStackTrace()
     } finally {
         connection.disconnect()
     }
-    throw Exception("Http Request Failed.")
 }
 
 /**
@@ -130,7 +128,6 @@ fun urlRequest(type: NetworkRequestType, url: String, body: Any, customBlock: Ht
  * on 08/12/2020 at 22:41
  * using IntelliJ IDEA
  */
-
 val gson: Gson = GsonBuilder().create()
 val appleGson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 val DatagramPacket.asPacket get() = PacketReader(this).buildPacket()
