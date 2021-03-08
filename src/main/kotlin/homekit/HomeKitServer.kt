@@ -14,7 +14,6 @@ import homekit.tlv.TLVError
 import shelly.ShellyBulb
 import shelly.ShellySwitch
 import utils.Logger
-import utils.appleGson
 import utils.gson
 import utils.readOrCompute
 import java.net.InetAddress
@@ -76,17 +75,18 @@ class HomeKitServer(val settings: Settings) {
         Logger.info("Started our server...")
     }
 
-    fun handle(httpRequest: HttpRequest, session: Session): Response? {
+    fun handle(httpRequest: HttpRequest, session: Session): Response {
         val headers = httpRequest.headers
         val method = headers.httpMethod
         val path = headers.path
         val query = headers.query
         Logger.apply { debug("$green${session.remoteSocketAddress}$reset [$magenta$method$reset] $path $yellow$query$reset") }
-        val response = when {
+        return when {
             path == "/pair-setup" && method == HttpMethod.POST -> PairSetup.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pair-verify" && method == HttpMethod.POST -> PairVerify.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pairings" && method == HttpMethod.POST -> Pairings.handleRequest(session, service, pairings, httpRequest.content)
             path == "/accessories" && method == HttpMethod.GET -> accessoryStorage.createHttpResponse()
+            path == "/characteristics" && method == HttpMethod.GET && query != null -> Characteristics.retrieve(query, accessoryStorage)
             path == "/event" && method == HttpMethod.GET -> Events.handleEvents(accessoryStorage, query, session)
             path == "/characteristics" && method == HttpMethod.PUT -> {
                 val body = String(httpRequest.content)
@@ -115,27 +115,8 @@ class HomeKitServer(val settings: Settings) {
                 }
                 HttpResponse(207, data = "{\"characteristics\":[${responses.joinToString(",")}]}".toByteArray())
             }
-            path == "/characteristics" && method == HttpMethod.GET && query != null -> {
-                val querySplit = query.replace("id=", "").split("&")
-                val ids = querySplit[0]
-                    .replace("id=", "")
-                    .split(",")
-                    .map { it.split(".").let { split -> split[0].toInt() to split[1].toLong() } }
-                    .groupBy { it.first }
-
-                val toReturn = mutableListOf<CharacteristicResponse>()
-                ids.forEach { (aid, pairs) ->
-                    val accessory = accessoryStorage[aid]
-                    pairs.forEach { (_, iid) ->
-                        val characteristic = accessory[iid]
-                        toReturn.add(CharacteristicResponse(aid, iid, characteristic.value, status = StatusCodes.Success.value))
-                    }
-                }
-                HttpResponse(207, data = ("{ \"characteristics\" : ${appleGson.toJson(toReturn)} }").toByteArray())
-            }
             else -> TLVErrorResponse(2, TLVError.Unknown)
         }
-        return response
     }
 
     private inline fun <reified T> Map<String, Any>.require(key: String, message: () -> String): T {
@@ -146,3 +127,5 @@ class HomeKitServer(val settings: Settings) {
         }
     }
 }
+
+data class CharacteristicPair(val accessory: Int, val characteristic: Long)

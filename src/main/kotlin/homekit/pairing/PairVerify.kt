@@ -92,7 +92,6 @@ object PairVerify {
         val pairing = pairings.findPairing(controllerIdentifier) ?: return TLVErrorResponse(4, TLVError.Authentication)
         session.apply {
             currentController = pairing
-            Logger.info("Set the current controller to ${pairing.identifier}")
             currentState = 1
             isSecure = true
         }
