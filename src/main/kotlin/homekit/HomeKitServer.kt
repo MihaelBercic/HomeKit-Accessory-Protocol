@@ -2,7 +2,6 @@ package homekit
 
 import homekit.communication.*
 import homekit.communication.LiveSessions.subscribeFor
-import homekit.communication.LiveSessions.subscribedSessions
 import homekit.communication.LiveSessions.unsubscribeFrom
 import homekit.communication.structure.*
 import homekit.communication.structure.data.*
@@ -18,7 +17,9 @@ import utils.Logger
 import utils.appleGson
 import utils.gson
 import utils.readOrCompute
+import java.net.InetAddress
 import java.net.ServerSocket
+
 
 /**
  * Created by Mihael Valentin Berčič
@@ -27,15 +28,15 @@ import java.net.ServerSocket
  */
 class HomeKitServer(val settings: Settings) {
 
+    private val localhost = InetAddress.getLocalHost()
+    private val bridgeAddress = "http://${localhost.hostAddress}:${settings.port}"
     private var isRunning = true
-    private val accessoryStorage: AccessoryStorage = AccessoryStorage(Bridge())
+    private val accessoryStorage: AccessoryStorage = AccessoryStorage(Bridge(bridgeAddress))
+    private val service = HomeKitService(settings)
     private val pairings = readOrCompute("pairings.json") { PairingStorage() }
 
     fun start() {
-        settings.apply {
-            configurationNumber++
-            save()
-        }
+        if (localhost.isLoopbackAddress) throw Exception("$this is a loopback address! We can not advertise a loopback address.")
 
         readOrCompute("config.json") { Configuration() }.accessoryData.forEach { data ->
             val ip = data.require<String>("ip") { "IP is required for each accessory!" }
@@ -52,9 +53,12 @@ class HomeKitServer(val settings: Settings) {
                 else -> throw Exception("Accessory type of $type is not supported.")
             }
 
-            accessory.setup(data)
-            accessoryStorage.addAccessory(accessory)
-            Logger.debug("Successfully registered $ip with aid $id and type $type.")
+            accessory.apply {
+                setup(data, bridgeAddress)
+                update()
+                accessoryStorage.addAccessory(this)
+                Logger.debug("Successfully registered $ip with aid $id and type $type.")
+            }
         }
         Thread {
             ServerSocket(settings.port).apply {
@@ -68,6 +72,7 @@ class HomeKitServer(val settings: Settings) {
                 }
             }
         }.start()
+        service.startAdvertising()
         Logger.info("Started our server...")
     }
 
@@ -80,8 +85,9 @@ class HomeKitServer(val settings: Settings) {
         val response = when {
             path == "/pair-setup" && method == HttpMethod.POST -> PairSetup.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pair-verify" && method == HttpMethod.POST -> PairVerify.handleRequest(settings, pairings, session, httpRequest.content)
-            path == "/pairings" && method == HttpMethod.POST -> Pairings.handleRequest(session, pairings, httpRequest.content)
+            path == "/pairings" && method == HttpMethod.POST -> Pairings.handleRequest(session, service, pairings, httpRequest.content)
             path == "/accessories" && method == HttpMethod.GET -> accessoryStorage.createHttpResponse()
+            path == "/event" && method == HttpMethod.GET -> Events.handleEvents(accessoryStorage, query, session)
             path == "/characteristics" && method == HttpMethod.PUT -> {
                 val body = String(httpRequest.content)
                 val changeRequests = gson.fromJson(body, ChangeRequests::class.java)
@@ -103,7 +109,6 @@ class HomeKitServer(val settings: Settings) {
                                 0
                             }
                         }
-                        Logger.info(it)
                         responses.add("{\"aid\": $aid, \"iid\":$iid, \"status\": $status}")
                     }
                     accessory.commitChanges(characteristics)
@@ -127,28 +132,6 @@ class HomeKitServer(val settings: Settings) {
                     }
                 }
                 HttpResponse(207, data = ("{ \"characteristics\" : ${appleGson.toJson(toReturn)} }").toByteArray())
-            }
-            path == "/event" && method == HttpMethod.GET -> {
-                if (query == null) throw Exception("Query missing for event!")
-                session.shouldClose = true
-                session.sendMessage(HttpResponse(200), false)
-                // TODO multiple characteristics!
-                val split = query.replace("characteristics=", "").split(":")
-                val aid = split[0].toInt()
-                val accessory = accessoryStorage[aid]
-                val sessionsToSendTo = mutableSetOf<Session>()
-                val iids = split[1].split(",").map {
-                    val characteristic = accessory[it.toLong()]
-                    sessionsToSendTo.addAll(characteristic.subscribedSessions)
-                    CharacteristicResponse(aid, characteristic.iid, characteristic.value)
-                }
-                val httpResponse = HttpResponse(type = ResponseType.Event, data = appleGson.toJson(CharacteristicsResponse(iids)).toByteArray())
-
-                sessionsToSendTo.forEach {
-                    Logger.info("Sending event to [${it.currentController.identifier}]!")
-                    it.sendMessage(httpResponse)
-                }
-                null
             }
             else -> TLVErrorResponse(2, TLVError.Unknown)
         }

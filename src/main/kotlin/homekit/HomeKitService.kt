@@ -8,7 +8,6 @@ import mdns.records.PTRRecord
 import mdns.records.SRVRecord
 import mdns.records.TXTRecord
 import mdns.records.structure.RecordType
-import utils.Logger
 import java.lang.Thread.sleep
 import java.net.DatagramPacket
 import java.net.InetAddress
@@ -74,6 +73,10 @@ class HomeKitService(settings: Settings, name: String = "HomeServer") : Multicas
             add(addressRecord)
             add(txtRecord)
         }
+    }
+
+    fun updateTextRecords(isPaired: Boolean) {
+        txtRecord.dataMap["sf"] = if (isPaired) 0 else 1
     }
 
 

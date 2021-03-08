@@ -15,17 +15,21 @@ open class Service(
     @Expose
     private val characteristics = mutableListOf<Characteristic>()
 
-    private fun alreadyExists(characteristicType: CharacteristicType) = characteristics.any { it.type == characteristicType }
+    private val characteristicMap = mutableMapOf<CharacteristicType, Characteristic>()
 
-    fun addCharacteristic(
-        type: CharacteristicType,
-        value: Any? = type.defaultValue,
-        supportsEvents: Boolean = false,
-        onChange: Characteristic.() -> Unit = {}
-    ) = Characteristic(value, type, ((iid shl 8) or type.id.toLong()), onChange).apply {
-        if (alreadyExists(type)) throw Exception("Characteristic with type $this@hasValue already exists.")
-        characteristics.add(this)
-        accessory.mappedCharacteristics[iid] = this
+    private fun alreadyExists(characteristicType: CharacteristicType) = characteristicMap[characteristicType] != null
+
+    fun set(type: CharacteristicType, value: () -> Any?) {
+        characteristicMap[type]?.value = value()
+            ?: throw Exception("Characteristic with $type does not exist in this service: $type")
     }
+
+    fun add(type: CharacteristicType, value: Any? = type.defaultValue, onChange: Characteristic.() -> Unit = {}) =
+        Characteristic(value, type, ((iid shl 8) or type.id.toLong()), onChange).apply {
+            if (alreadyExists(type)) throw Exception("Characteristic with type $this@hasValue already exists.")
+            characteristics.add(this)
+            characteristicMap[type] = this
+            accessory.mappedCharacteristics[iid] = this
+        }
 
 }

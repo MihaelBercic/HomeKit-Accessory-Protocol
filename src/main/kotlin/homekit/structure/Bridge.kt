@@ -1,6 +1,5 @@
 package homekit.structure
 
-import utils.Logger
 import homekit.communication.structure.AppleServices
 import homekit.communication.structure.CharacteristicType
 import homekit.communication.structure.data.ChangeRequest
@@ -12,24 +11,20 @@ import homekit.communication.structure.data.ChangeRequest
  */
 
 
-class Bridge : Accessory(1) {
+class Bridge(ip: String) : Accessory(1) {
 
     init {
-        setup()
+        setup(bridgeAddress = ip)
     }
 
-    override fun setup(configurationDetails: Map<String, Any>) {
-        registerInformation("Bridge", "1.0.0", "1.0.0", "Bridge", "Mihael", "M1H43L") {
-            Logger.info("Identifying bridge!")
-        }
-
-        service(2, AppleServices.ProtocolInformation) {
-            addCharacteristic(CharacteristicType.Version, "1.1.0")
+    override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
+        registerInformation("Bridge", "1.0.0", "1.0.0", "Bridge", "Mihael", "M1H43L")
+        addService(2, AppleServices.ProtocolInformation) {
+            add(CharacteristicType.Version, "1.1.0")
         }
     }
 
-    override fun commitChanges(changeRequests: List<ChangeRequest>) {
-        TODO("Not yet implemented")
-    }
+    override fun update() {}
+    override fun commitChanges(changeRequests: List<ChangeRequest>) {}
 
 }

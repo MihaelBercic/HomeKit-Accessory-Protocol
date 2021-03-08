@@ -1,13 +1,14 @@
 package homekit.pairing
 
-import utils.Logger
 import encryption.Ed25519
+import homekit.HomeKitService
 import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
 import homekit.communication.structure.data.Pairing
 import homekit.communication.structure.data.PairingStorage
 import homekit.tlv.*
+import utils.Logger
 
 /**
  * Created by Mihael Valentin Berčič
@@ -16,7 +17,7 @@ import homekit.tlv.*
  */
 object Pairings {
 
-    fun handleRequest(session: Session, pairings: PairingStorage, data: ByteArray): Response {
+    fun handleRequest(session: Session, homeKitService: HomeKitService, pairings: PairingStorage, data: ByteArray): Response {
         if (!session.currentController.isAdmin) return TLVErrorResponse(2, TLVError.Authentication)
         val packet = TLVPacket(data)
         val stateItem = packet[TLVValue.State]
@@ -25,14 +26,14 @@ object Pairings {
         Logger.info("State: ${stateItem.dataArray[0]} looking for $pairingMethod")
 
         return when (pairingMethod) {
-            PairingMethod.AddPairing -> addPairing(pairings, packet)
-            PairingMethod.RemovePairing -> removePairing(pairings, session, packet)
+            PairingMethod.AddPairing -> addPairing(pairings, homeKitService, packet)
+            PairingMethod.RemovePairing -> removePairing(pairings, session, homeKitService, packet)
             PairingMethod.ListPairings -> listPairings(pairings)
             else -> HttpResponse(404, "application/pairing+tlv8")
         }
     }
 
-    private fun addPairing(pairings: PairingStorage, packet: TLVPacket): Response {
+    private fun addPairing(pairings: PairingStorage, homeKitService: HomeKitService, packet: TLVPacket): Response {
         val additionalIdentifier = String(packet[TLVValue.Identifier].dataArray)
         val additionalPublicKey = Ed25519.parsePublicKey(packet[TLVValue.PublicKey].dataArray)
         val additionalPermissions = packet[TLVValue.Permissions].dataArray[0]
@@ -43,10 +44,11 @@ object Pairings {
             if (!encodedAdditionalPublicKey.contentEquals(existingPairing.publicKey)) return TLVErrorResponse(2, TLVError.Unknown)
             existingPairing.isAdmin = isAdmin
         } else pairings.addPairing(Pairing(additionalIdentifier, encodedAdditionalPublicKey, isAdmin))
+        if (pairings.isPaired) homeKitService.updateTextRecords(true)
         return Response(TLVPacket(TLVItem(TLVValue.State, 2)).asByteArray)
     }
 
-    private fun removePairing(pairingStorage: PairingStorage, session: Session, packet: TLVPacket): Response {
+    private fun removePairing(pairingStorage: PairingStorage, session: Session, homeKitService: HomeKitService, packet: TLVPacket): Response {
         val method = packet[TLVValue.Method]
         val identifier = String(packet[TLVValue.Identifier].dataArray)
         val currentIdentifier = session.currentController
@@ -55,6 +57,7 @@ object Pairings {
         if (!isAdmin) return TLVErrorResponse(2, TLVError.Authentication)
         pairingStorage.removePairing(identifier)
         session.shouldClose = true
+        if (!pairingStorage.isPaired) homeKitService.updateTextRecords(false)
         return Response(TLVPacket(TLVItem(TLVValue.State, 2)).asByteArray)
     }
 

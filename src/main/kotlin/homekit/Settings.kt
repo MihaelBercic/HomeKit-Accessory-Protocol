@@ -14,4 +14,8 @@ data class Settings(
     val serverMAC: String
 ) {
     fun save() = File("settings.json").writeText(gson.toJson(this))
+    fun increaseConfiguration(){
+        configurationNumber++
+        save()
+    }
 }

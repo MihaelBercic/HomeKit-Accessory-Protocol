@@ -33,8 +33,10 @@ class AccessoryStorage(bridge: Accessory) {
     fun createHttpResponse() = HttpResponse(data = appleGson.toJson(this).toByteArray())
 }
 
-class Pairing(@Expose val identifier: String, @Expose val publicKey: ByteArray, @Expose var isAdmin: Boolean)
-class PairingStorage(@Expose val list: MutableList<Pairing> = mutableListOf()) {
+class Pairing(val identifier: String, val publicKey: ByteArray, var isAdmin: Boolean)
+class PairingStorage(val list: MutableList<Pairing> = mutableListOf()) {
+
+    val isPaired: Boolean get() = list.isNotEmpty()
 
     fun addPairing(pairing: Pairing) {
         list.add(pairing)
@@ -47,6 +49,7 @@ class PairingStorage(@Expose val list: MutableList<Pairing> = mutableListOf()) {
         list.removeIf { it.identifier == identifier }
         save()
     }
+
 
     private fun save() = File("pairings.json").writeText(gson.toJson(this))
 

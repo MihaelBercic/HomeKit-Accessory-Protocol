@@ -18,32 +18,41 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
     private val executor = Executors.newSingleThreadScheduledExecutor()
     private var scheduledFuture: ScheduledFuture<out Any>? = null
 
-    override fun setup(configurationDetails: Map<String, Any>) {
+    private val windowCoveringServiceId = 2
+
+    override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
         registerInformation("Shelly Switch", "1.0.0", "1.0", "Shelly", "Switch", "Sh2lly") {
             Logger.trace("Identifying shelly switch with id: $aid")
+            // TODO roll up and down for 2 seconds.
         }
 
-        service(2, AppleServices.WindowCovering) {
+        addService(windowCoveringServiceId, AppleServices.WindowCovering) {
             sendRequest(NetworkRequestType.GET, "/roller/0") { _, body ->
-                val switchStatus = gson.fromJson(body, ShellySwitchStatus::class.java)
-                val state = addCharacteristic(CharacteristicType.PositionState, supportsEvents = true)
-                val currentPosition = addCharacteristic(CharacteristicType.CurrentPosition, switchStatus.position, supportsEvents = true)
-                val targetPosition = addCharacteristic(CharacteristicType.TargetPosition, switchStatus.position) {
+                val state = add(CharacteristicType.PositionState)
+                val position = add(CharacteristicType.CurrentPosition)
+                val target = add(CharacteristicType.TargetPosition) {
                     value?.apply {
-                        currentPosition.value = this
                         actions["go"] = "to_pos"
                         actions["roller_pos"] = this
                     }
                 }
 
-                addCharacteristic(CharacteristicType.HoldPosition) {
-                    Logger.info("Sending stop request because hold position has changed!")
-                    sendRequest(NetworkRequestType.GET, "/roller/0?go=stop")
-                }
-                sendRequest(NetworkRequestType.GET, "/settings/roller/0?roller_stop_url=http://192.168.1.20:3000/event?characteristics=$aid:${currentPosition.iid},${state.iid},${targetPosition.iid}")
+                val query = "${target.iid},${state.iid},${position.iid}"
+                val notificationStopUrl = "/settings/roller/0?roller_stop_url=$bridgeAddress/event?$aid:$query"
+                sendRequest(NetworkRequestType.GET, notificationStopUrl)
             }
         }
 
+    }
+
+    override fun update() {
+        sendRequest(NetworkRequestType.GET, "/roller/0") { code, body ->
+            getService(2) {
+                val data = gson.fromJson(body, ShellySwitchStatus::class.java)
+                set(CharacteristicType.CurrentPosition) { data.position }
+                set(CharacteristicType.TargetPosition) { data.position }
+            }
+        }
     }
 
     override fun commitChanges(changeRequests: List<ChangeRequest>) {
