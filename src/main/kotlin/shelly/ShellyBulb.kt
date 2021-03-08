@@ -46,14 +46,9 @@ class ShellyBulb(aid: Int, ip: String) : Accessory(aid, ip) {
     override fun commitChanges(changeRequests: List<ChangeRequest>) {
         if (actions.isNotEmpty()) {
             val toSend = actions.map { (key, value) -> "$key=$value" }.joinToString("&")
-            Logger.info("Sending ${Logger.magenta}$toSend${Logger.reset} to our light!")
-
             scheduledFuture?.cancel(true)
             scheduledFuture = executor.schedule({
-                sendRequest(NetworkRequestType.GET, "/light/0?$toSend") { code, body ->
-                    Logger.trace("Light status: $code => $body")
-                    if (code == 200) actions.clear()
-                }
+                sendRequest(NetworkRequestType.GET, "/light/0?$toSend") { code, _ -> if (code == 200) actions.clear() }
             }, 250, TimeUnit.MILLISECONDS)
         }
     }

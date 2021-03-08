@@ -25,7 +25,7 @@ import java.net.ServerSocket
  * on 22/12/2020 at 23:38
  * using IntelliJ IDEA
  */
-class HomeKitServer(val settings: Settings) {
+class HomeKitServer(private val settings: Settings) {
 
     private val localhost = InetAddress.getLocalHost()
     private val bridgeAddress = "http://${localhost.hostAddress}:${settings.port}"
@@ -127,5 +127,3 @@ class HomeKitServer(val settings: Settings) {
         }
     }
 }
-
-data class CharacteristicPair(val accessory: Int, val characteristic: Long)
