@@ -31,5 +31,5 @@ This project implements HomeKit Accessory Protocol based on HAP Specification pr
     }
   ]
 }
-
 ```
+**Note:** Ids should all be > 1 (greater than one and unique) due to `id = 1` belonging to the bridge itself.
