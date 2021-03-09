@@ -69,7 +69,7 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
                     val headers = parseHeaders(decryptedContent)
                     HttpRequest(headers, decryptedContent.takeLast(headers.contentLength).toByteArray())
                 }
-                homeKitServer.handle(request, this).apply { if (this == null) println("Null response for ${request.headers}") }?.apply { sendMessage(this, shouldEncrypt) }
+                homeKitServer.handle(request, this).apply { sendMessage(this, shouldEncrypt) }
                 if (shouldClose) close()
             }
         } catch (e: Exception) {

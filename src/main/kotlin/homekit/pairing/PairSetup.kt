@@ -37,7 +37,7 @@ object PairSetup {
         if (requestedValue != session.currentState) throw Exception("Incorrect pair setup state.")
 
         return when (requestedValue) {
-            1 -> computeStartingInformation(session, packet)
+            1 -> computeStartingInformation(session)
             3 -> verifyDeviceProof(session, packet)
             5 -> decryptPublicInformation(settings, pairings, session, packet[Tag.EncryptedData])
             else -> HttpResponse(204, contentType)
@@ -45,7 +45,7 @@ object PairSetup {
 
     }
 
-    private fun computeStartingInformation(session: Session, packet: TLVPacket): HttpResponse {
+    private fun computeStartingInformation(session: Session): HttpResponse {
         val password = "111-11-111".apply { Logger.info("Pin: $this") }
         val srp = session.srp
         val publicKey = srp.computePublicKey(password)

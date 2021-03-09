@@ -3,7 +3,6 @@ package plugins.shelly
 import homekit.structure.Accessory
 import homekit.structure.data.AppleServices
 import homekit.structure.data.CharacteristicType
-import utils.Logger
 import utils.NetworkRequestType
 import utils.gson
 import java.net.URL
@@ -20,32 +19,26 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
     private val windowCoveringServiceId = 2
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
-        registerInformation("Shelly Switch", "1.0.0", "1.0", "Shelly", "Switch", "Sh2lly") {
-            Logger.trace("Identifying plugins.shelly switch with id: $aid")
-            // TODO roll up and down for 2 seconds.
-        }
+        registerInformation("Shelly Switch", "1.0.0", "1.0", "Shelly", "Switch", "Sh3lly")
 
         addService(windowCoveringServiceId, AppleServices.WindowCovering) {
-            sendRequest(NetworkRequestType.GET, "/roller/0") { _, body ->
-                val state = add(CharacteristicType.PositionState)
-                val position = add(CharacteristicType.CurrentPosition)
-                val target = add(CharacteristicType.TargetPosition) {
-                    value?.apply {
-                        actions["go"] = "to_pos"
-                        actions["roller_pos"] = this
-                    }
+            val state = add(CharacteristicType.PositionState)
+            val position = add(CharacteristicType.CurrentPosition)
+            val target = add(CharacteristicType.TargetPosition) {
+                value?.apply {
+                    actions["go"] = "to_pos"
+                    actions["roller_pos"] = this
                 }
-
-                val query = "${target.iid},${state.iid},${position.iid}"
-                val notificationStopUrl = "/settings/roller/0?roller_stop_url=$bridgeAddress/event?$aid:$query"
-                sendRequest(NetworkRequestType.GET, notificationStopUrl)
             }
-        }
 
+            val query = "${target.iid},${state.iid},${position.iid}"
+            val notificationStopUrl = "/settings/roller/0?roller_stop_url=$bridgeAddress/event?$aid:$query"
+            sendRequest(NetworkRequestType.GET, notificationStopUrl)
+        }
     }
 
     override fun update() {
-        sendRequest(NetworkRequestType.GET, "/roller/0") { code, body ->
+        sendRequest(NetworkRequestType.GET, "/roller/0") { _, body ->
             getService(2) {
                 val data = gson.fromJson(body, ShellySwitchStatus::class.java)
                 set(CharacteristicType.CurrentPosition) { data.position }
