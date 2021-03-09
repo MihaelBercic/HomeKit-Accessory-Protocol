@@ -10,7 +10,7 @@ settings.gradle.kts
 gradle/
 src/main/java/org/
 out/
-communication/
+bridge/
 *.jar
 *.json
 nohup.out

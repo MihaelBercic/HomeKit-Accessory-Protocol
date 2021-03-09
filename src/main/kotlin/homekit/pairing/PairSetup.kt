@@ -106,8 +106,8 @@ object PairSetup {
         if (!isVerified) throw Exception("Signature not verified...")
 
         val accessoryKeyPair = Ed25519.generateKeyPair().apply {
-            Ed25519.storePrivateKey("communication/ed25519-private", privateKey)
-            Ed25519.storePublicKey("communication/ed25519-public", publicKey)
+            Ed25519.storePrivateKey("bridge/ed25519-private", privateKey)
+            Ed25519.storePublicKey("bridge/ed25519-public", publicKey)
         }
 
         val encodedPublicKey = Ed25519.encode(accessoryKeyPair.publicKey)

@@ -16,6 +16,7 @@ import shelly.ShellySwitch
 import utils.Logger
 import utils.gson
 import utils.readOrCompute
+import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
 
@@ -33,6 +34,10 @@ class HomeKitServer(private val settings: Settings) {
     private val accessoryStorage: AccessoryStorage = AccessoryStorage(Bridge(bridgeAddress))
     private val service = HomeKitService(settings)
     private val pairings = readOrCompute("pairings.json") { PairingStorage() }
+
+    init {
+        File("bridge").mkdir()
+    }
 
     fun start() {
         if (localhost.isLoopbackAddress) throw Exception("$this is a loopback address! We can not advertise a loopback address.")

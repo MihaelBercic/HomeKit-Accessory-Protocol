@@ -42,7 +42,7 @@ object PairVerify {
 
 
     private fun generateCurveKey(settings: Settings, session: Session, packet: TLVPacket): HttpResponse {
-        val edPrivate = Ed25519.loadPrivateKey("communication/ed25519-private")
+        val edPrivate = Ed25519.loadPrivateKey("bridge/ed25519-private")
         val deviceCurveKeyArray = packet[TLVValue.PublicKey].dataArray.reversedArray()
 
         val deviceCurveKey = Curve25519.decode(deviceCurveKeyArray)
