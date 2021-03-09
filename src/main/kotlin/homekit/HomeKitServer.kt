@@ -51,7 +51,7 @@ class HomeKitServer(private val settings: Settings) {
             }
 
             val accessory = when (type) {
-                "Light" -> ShellyBulb(id, ip)
+                "ShellyBulb" -> ShellyBulb(id, ip)
                 "ShellySwitch" -> ShellySwitch(id, ip)
                 else -> throw Exception("Accessory type of $type is not supported.")
             }
