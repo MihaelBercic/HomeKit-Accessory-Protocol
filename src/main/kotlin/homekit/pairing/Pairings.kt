@@ -17,6 +17,15 @@ import utils.Logger
  */
 object Pairings {
 
+    /**
+     * Decodes the TLV packet from the given byte array and decides which method was requested.
+     *
+     * @param session
+     * @param homeKitService
+     * @param pairings
+     * @param data
+     * @return A response to be sent back to the requester.
+     */
     fun handleRequest(session: Session, homeKitService: HomeKitService, pairings: PairingStorage, data: ByteArray): Response {
         if (!session.currentController.isAdmin) return TLVErrorResponse(2, TLVError.Authentication)
         val packet = TLVPacket(data)
