@@ -1,5 +1,6 @@
 package homekit
 
+import homekit.structure.data.PairingStorage
 import mdns.MulticastService
 import mdns.packet.MulticastDnsPacket
 import mdns.packet.MulticastDnsPacketHeader
@@ -20,10 +21,11 @@ import kotlin.random.Random
  * using IntelliJ IDEA
  */
 
-class HomeKitService(settings: Settings, name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
+class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
 
     private val recordName = "$name.$protocol"
     private val targetName = "$name.local"
+
     private val tcpAnswer = PTRRecord(protocol, recordName, false, 4500)
     private val srvRecord = SRVRecord(recordName, targetName, settings.port, timeToLive = 4500, isCached = false)
     private val addressRecord = ARecord("$name.local", localhost.hostAddress, false, 4500)
@@ -33,7 +35,7 @@ class HomeKitService(settings: Settings, name: String = "HomeServer") : Multicas
         put("md", name)
         put("pv", "1.1")
         put("s#", "1")
-        put("sf", 0x00) // TODO update when paired / unpaired
+        put("sf", if (pairingStorage.isPaired) 0 else 1)
         put("ci", 2)
     }
 

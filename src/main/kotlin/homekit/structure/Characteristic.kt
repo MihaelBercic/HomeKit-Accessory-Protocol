@@ -2,10 +2,20 @@ package homekit.structure
 
 import com.google.gson.annotations.Expose
 import homekit.communication.LiveSessions.isCurrentSessionSubscribed
-import homekit.communication.structure.CharacteristicType
-import homekit.communication.structure.Format
+import homekit.structure.data.CharacteristicType
+import homekit.structure.data.Format
 
-class Characteristic(value: Any? = null, @Expose val type: CharacteristicType, @Expose val iid: Long, val onChange: Characteristic.() -> Unit) {
+/**
+ * This class holds information about an individual characteristic and allows
+ *
+ * @property type [CharacteristicType] of the characteristic.
+ * @property iid Characteristic unique identifier.
+ * @property onChange Block to execute on value change.
+ *
+ * @constructor
+ * @param value to hold upon creation of the characteristic.
+ */
+class Characteristic(value: Any?, @Expose val type: CharacteristicType, @Expose val iid: Long, val onChange: Characteristic.() -> Unit) {
 
     @Expose
     val format = type.format
@@ -45,17 +55,8 @@ class Characteristic(value: Any? = null, @Expose val type: CharacteristicType, @
                 }
                 else -> throw java.lang.Exception("Unknown type happened: $format ... $value")
             }
-            if (!type.isReadOnly) {
-                previousValue = field
-                field = newValue
-            }
+            val previousValue = field
+            if (!type.isReadOnly) field = newValue
             if (newValue != previousValue) onChange(this)
-
         }
-
-    var previousValue: Any? = null
-    private fun revert() {
-        value = previousValue
-    }
-
 }

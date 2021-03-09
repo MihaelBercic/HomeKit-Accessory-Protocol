@@ -83,4 +83,6 @@ object Ed25519 {
         return keyFactory.generatePublic(keySpec) as EdECPublicKey
     }
 
+    data class EdEcKeyPair(val privateKey: EdECPrivateKey, val publicKey: EdECPublicKey)
+
 }

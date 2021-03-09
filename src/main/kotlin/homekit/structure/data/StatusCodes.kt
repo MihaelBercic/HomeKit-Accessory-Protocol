@@ -1,4 +1,4 @@
-package homekit.communication.structure
+package homekit.structure.data
 
 /**
  * Created by Mihael Valentin Berčič

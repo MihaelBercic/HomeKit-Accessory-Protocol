@@ -36,4 +36,6 @@ object Curve25519 {
         doPhase(publicKey, true)
     }.generateSecret()
 
+    data class CurveKeyPair(val privateKey: XECPrivateKey, val publicKey: XECPublicKey)
+
 }

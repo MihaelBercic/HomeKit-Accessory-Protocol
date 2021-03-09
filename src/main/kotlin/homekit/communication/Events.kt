@@ -1,9 +1,10 @@
 package homekit.communication
 
 import homekit.communication.LiveSessions.subscribedSessions
-import homekit.communication.structure.data.AccessoryStorage
-import homekit.communication.structure.data.CharacteristicResponse
-import homekit.communication.structure.data.CharacteristicsResponse
+import homekit.structure.data.AccessoryStorage
+import homekit.structure.data.CharacteristicResponse
+import homekit.structure.data.CharacteristicsResponse
+import utils.ResponseType
 import utils.appleGson
 
 /**

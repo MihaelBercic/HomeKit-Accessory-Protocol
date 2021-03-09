@@ -1,11 +1,7 @@
-package homekit.communication.structure.data
+package homekit.structure.data
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
-import homekit.communication.structure.CharacteristicUnit
-import homekit.communication.structure.Format
-import homekit.communication.structure.Permission
-import homekit.communication.structure.StatusCodes
 
 /**
  * Created by Mihael Valentin Berčič

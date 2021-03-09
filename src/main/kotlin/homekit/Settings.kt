@@ -8,14 +8,11 @@ import java.io.File
  * on 14/02/2021 at 13:45
  * using IntelliJ IDEA
  */
-data class Settings(
-    var configurationNumber: Int,
-    val port: Int,
-    val serverMAC: String
-) {
-    fun save() = File("settings.json").writeText(gson.toJson(this))
-    fun increaseConfiguration(){
+data class Settings(var configurationNumber: Int, val port: Int, val serverMAC: String) {
+
+    fun increaseConfiguration() {
         configurationNumber++
-        save()
+        File("settings.json").writeText(gson.toJson(this))
     }
+
 }

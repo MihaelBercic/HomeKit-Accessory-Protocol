@@ -3,11 +3,12 @@ package homekit.communication
 import encryption.ChaCha
 import encryption.HKDF
 import encryption.SRP
-import homekit.Constants
 import homekit.HomeKitServer
 import homekit.communication.LiveSessions.removeFromLiveSessions
 import homekit.communication.LiveSessions.secureSessionStarted
-import homekit.communication.structure.data.Pairing
+import homekit.structure.data.Pairing
+import utils.Constants
+import utils.HttpMethod
 import utils.Logger
 import java.io.InputStream
 import java.net.Socket
@@ -21,7 +22,7 @@ import java.nio.ByteOrder
  * using IntelliJ IDEA
  */
 
-class Session(private val socket: Socket, private val homeKitServer: HomeKitServer) {
+class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
 
     var isSecure = false
     var shouldClose = false

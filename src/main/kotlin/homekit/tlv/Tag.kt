@@ -5,7 +5,7 @@ package homekit.tlv
  * on 24/12/2020 at 11:36
  * using IntelliJ IDEA
  */
-enum class TLVValue(val typeValue: Int) {
+enum class Tag(val typeValue: Int) {
     Method(0),
     Identifier(1),
     Salt(2),

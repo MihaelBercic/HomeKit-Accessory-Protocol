@@ -1,9 +1,8 @@
-package shelly
+package plugins.shelly
 
-import homekit.communication.structure.AppleServices
-import homekit.communication.structure.CharacteristicType
-import homekit.communication.structure.data.ChangeRequest
 import homekit.structure.Accessory
+import homekit.structure.data.AppleServices
+import homekit.structure.data.CharacteristicType
 import utils.Logger
 import utils.NetworkRequestType
 import utils.gson
@@ -22,7 +21,7 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
         registerInformation("Shelly Switch", "1.0.0", "1.0", "Shelly", "Switch", "Sh2lly") {
-            Logger.trace("Identifying shelly switch with id: $aid")
+            Logger.trace("Identifying plugins.shelly switch with id: $aid")
             // TODO roll up and down for 2 seconds.
         }
 
@@ -55,7 +54,7 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
         }
     }
 
-    override fun commitChanges(changeRequests: List<ChangeRequest>) {
+    override fun commitChanges() {
         val query = actions.map { "${it.key}=${it.value}" }.joinToString("&")
         scheduledFuture?.cancel(true)
         scheduledFuture = executor.schedule({ URL("http://$ip/roller/0?$query").readText() }, 1000, TimeUnit.MILLISECONDS)

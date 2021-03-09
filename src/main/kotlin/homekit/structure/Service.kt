@@ -1,8 +1,8 @@
 package homekit.structure
 
 import com.google.gson.annotations.Expose
-import homekit.communication.structure.AppleServices
-import homekit.communication.structure.CharacteristicType
+import homekit.structure.data.AppleServices
+import homekit.structure.data.CharacteristicType
 
 open class Service(
     @Expose val type: AppleServices,
@@ -14,16 +14,29 @@ open class Service(
 
     @Expose
     private val characteristics = mutableListOf<Characteristic>()
-
     private val characteristicMap = mutableMapOf<CharacteristicType, Characteristic>()
 
     private fun alreadyExists(characteristicType: CharacteristicType) = characteristicMap[characteristicType] != null
 
+    /**
+     * Fetches the characteristic with the given type.
+     *
+     * If the characteristic exists, it's value is changed. If not, an exception is thrown that such characteristic does not exist.
+     *
+     * @param type [CharacteristicType] of a characteristic.
+     * @param value Value to be set if the characteristic exists.
+     */
     fun set(type: CharacteristicType, value: () -> Any?) {
-        characteristicMap[type]?.value = value()
-            ?: throw Exception("Characteristic with $type does not exist in this service: $type")
+        characteristicMap[type]?.value = value() ?: throw Exception("Characteristic with $type does not exist in this service: $type")
     }
 
+    /**
+     * Adds the characteristic with the given [CharacteristicType] to the service.
+     *
+     * @param type [CharacteristicType]
+     * @param value [Any] value to be set on creation.
+     * @param onChange Block to run on value change.
+     */
     fun add(type: CharacteristicType, value: Any? = type.defaultValue, onChange: Characteristic.() -> Unit = {}) =
         Characteristic(value, type, ((iid shl 8) or type.id.toLong()), onChange).apply {
             if (alreadyExists(type)) throw Exception("Characteristic with type $this@hasValue already exists.")

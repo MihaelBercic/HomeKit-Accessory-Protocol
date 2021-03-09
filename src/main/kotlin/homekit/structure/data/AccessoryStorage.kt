@@ -1,11 +1,9 @@
-package homekit.communication.structure.data
+package homekit.structure.data
 
 import com.google.gson.annotations.Expose
 import homekit.communication.HttpResponse
 import homekit.structure.Accessory
 import utils.appleGson
-import utils.gson
-import java.io.File
 
 /**
  * Created by Mihael Valentin Berčič
@@ -32,26 +30,3 @@ class AccessoryStorage(bridge: Accessory) {
 
     fun createHttpResponse() = HttpResponse(data = appleGson.toJson(this).toByteArray())
 }
-
-class Pairing(val identifier: String, val publicKey: ByteArray, var isAdmin: Boolean)
-class PairingStorage(val list: MutableList<Pairing> = mutableListOf()) {
-
-    val isPaired: Boolean get() = list.isNotEmpty()
-
-    fun addPairing(pairing: Pairing) {
-        list.add(pairing)
-        save()
-    }
-
-    fun findPairing(identifier: String) = list.firstOrNull { it.identifier == identifier }
-
-    fun removePairing(identifier: String) {
-        list.removeIf { it.identifier == identifier }
-        save()
-    }
-
-
-    private fun save() = File("pairings.json").writeText(gson.toJson(this))
-
-}
-

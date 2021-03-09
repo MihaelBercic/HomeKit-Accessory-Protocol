@@ -1,5 +1,7 @@
 package homekit.communication
 
+import utils.HttpMethod
+import utils.ResponseType
 import java.util.regex.Pattern
 
 /**
@@ -8,13 +10,7 @@ import java.util.regex.Pattern
  * using IntelliJ IDEA
  */
 data class HttpHeaders(val httpMethod: HttpMethod, val path: String, val query: String?, val contentLength: Int)
-
 class HttpRequest(val headers: HttpHeaders, val content: ByteArray)
-
-enum class ResponseType(val data: String) {
-    Http("HTTP/1.1"),
-    Event("EVENT/1.0")
-}
 
 open class Response(open val data: ByteArray = ByteArray(0))
 

@@ -8,12 +8,11 @@ import homekit.Settings
 import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
-import homekit.communication.structure.data.PairingStorage
+import homekit.structure.data.PairingStorage
 import homekit.tlv.TLVError
 import homekit.tlv.TLVItem
 import homekit.tlv.TLVPacket
-import homekit.tlv.TLVValue
-import utils.Logger
+import homekit.tlv.Tag
 import java.nio.ByteBuffer
 
 
@@ -29,13 +28,13 @@ object PairVerify {
 
     fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): Response {
         val tlvPacket = TLVPacket(data)
-        val stateItem = tlvPacket[TLVValue.State]
+        val stateItem = tlvPacket[Tag.State]
         val requestedState = stateItem.dataList[0].toInt()
 
         if (session.currentState != requestedState) throw Exception("State mismatch.")
         return when (requestedState) {
             1 -> generateCurveKey(settings, session, tlvPacket)
-            3 -> verifyDeviceInformation(pairings, session, tlvPacket[TLVValue.EncryptedData])
+            3 -> verifyDeviceInformation(pairings, session, tlvPacket[Tag.EncryptedData])
             else -> HttpResponse(204, contentType)
         }
     }
@@ -43,7 +42,7 @@ object PairVerify {
 
     private fun generateCurveKey(settings: Settings, session: Session, packet: TLVPacket): HttpResponse {
         val edPrivate = Ed25519.loadPrivateKey("bridge/ed25519-private")
-        val deviceCurveKeyArray = packet[TLVValue.PublicKey].dataArray.reversedArray()
+        val deviceCurveKeyArray = packet[Tag.PublicKey].dataArray.reversedArray()
 
         val deviceCurveKey = Curve25519.decode(deviceCurveKeyArray)
         val curveKeyPair = Curve25519.generateKeyPair()
@@ -57,8 +56,8 @@ object PairVerify {
         val infoSignature = Ed25519.sign(edPrivate, accessoryInfo)
 
         val subTlv = TLVPacket(
-            TLVItem(TLVValue.Identifier, *serverMACArray),
-            TLVItem(TLVValue.Signature, *infoSignature)
+            TLVItem(Tag.Identifier, *serverMACArray),
+            TLVItem(Tag.Signature, *infoSignature)
         )
         val subArray = subTlv.asByteArray
         val subBuffer = ByteBuffer.allocate(12 + subArray.size).apply {
@@ -69,9 +68,9 @@ object PairVerify {
         val encrypted = ChaCha.encrypt(subBuffer.array(), session.sessionKey)
 
         val responsePacket = TLVPacket(
-            TLVItem(TLVValue.State, 2),
-            TLVItem(TLVValue.EncryptedData, *encrypted),
-            TLVItem(TLVValue.PublicKey, *encodedPublicKey)
+            TLVItem(Tag.State, 2),
+            TLVItem(Tag.EncryptedData, *encrypted),
+            TLVItem(Tag.PublicKey, *encodedPublicKey)
         )
 
         session.currentState = 3
@@ -87,7 +86,7 @@ object PairVerify {
         }
         val decoded = ChaCha.decrypt(dataBuffer.array(), session.sessionKey)
         val parsedPacket = TLVPacket(decoded)
-        val controllerIdentifier = String(parsedPacket[TLVValue.Identifier].dataArray)
+        val controllerIdentifier = String(parsedPacket[Tag.Identifier].dataArray)
 
         val pairing = pairings.findPairing(controllerIdentifier) ?: return TLVErrorResponse(4, TLVError.Authentication)
         session.apply {
@@ -95,7 +94,7 @@ object PairVerify {
             currentState = 1
             isSecure = true
         }
-        return HttpResponse(contentType = contentType, data = TLVPacket(TLVItem(TLVValue.State, 0x04)).asByteArray)
+        return HttpResponse(contentType = contentType, data = TLVPacket(TLVItem(Tag.State, 0x04)).asByteArray)
     }
 
 }

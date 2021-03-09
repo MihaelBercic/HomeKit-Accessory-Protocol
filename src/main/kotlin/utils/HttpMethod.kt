@@ -1,4 +1,4 @@
-package homekit.communication
+package utils
 
 /**
  * Created by Mihael Valentin Berčič

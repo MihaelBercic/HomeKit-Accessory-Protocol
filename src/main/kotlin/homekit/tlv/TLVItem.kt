@@ -16,9 +16,9 @@ import kotlin.math.ceil
  *
  * @property identifier Specific Tag value as specified by HAP documentation. Check out
  * @param content TLV Item's content as an array of bytes. Used when creating a TLVItem that is already populated.
- * @see [TLVValue] for further value information.
+ * @see [Tag] for further value information.
  */
-open class TLVItem(val identifier: TLVValue, vararg content: Byte = ByteArray(0)) {
+open class TLVItem(val identifier: Tag, vararg content: Byte = ByteArray(0)) {
 
     val dataList = content.toMutableList()
     val dataArray get() = dataList.toByteArray()

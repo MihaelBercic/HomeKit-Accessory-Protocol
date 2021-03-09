@@ -1,9 +1,8 @@
 package homekit.structure
 
 import com.google.gson.annotations.Expose
-import homekit.communication.structure.AppleServices
-import homekit.communication.structure.CharacteristicType
-import homekit.communication.structure.data.ChangeRequest
+import homekit.structure.data.AppleServices
+import homekit.structure.data.CharacteristicType
 import utils.NetworkRequestType
 import utils.urlRequest
 
@@ -16,7 +15,7 @@ abstract class Accessory(@Expose val aid: Int, val ip: String = "") {
 
     abstract fun setup(configurationDetails: Map<String, Any> = emptyMap(), bridgeAddress: String)
     abstract fun update()
-    abstract fun commitChanges(changeRequests: List<ChangeRequest>)
+    abstract fun commitChanges()
 
     fun addService(id: Int, type: AppleServices, block: Service.() -> Unit = {}) = Service(type, this, ((aid shl 8) or id).toLong()).apply {
         if (services.any { it.iid == iid }) throw Exception("Service with IID $id already exists on this accessory.")

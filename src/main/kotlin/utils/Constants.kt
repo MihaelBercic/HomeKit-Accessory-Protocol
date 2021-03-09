@@ -1,4 +1,4 @@
-package homekit
+package utils
 
 /**
  * Created by Mihael Valentin Berčič

@@ -1,4 +1,4 @@
-package shelly
+package plugins.shelly
 
 import com.google.gson.annotations.SerializedName
 

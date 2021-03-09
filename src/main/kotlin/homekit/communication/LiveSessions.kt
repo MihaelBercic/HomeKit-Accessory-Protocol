@@ -23,6 +23,10 @@ object LiveSessions {
         threadSessionMap[Thread.currentThread()] = this
     }
 
+    fun Session.manageSubscription(characteristic: Characteristic, subscribe: Boolean) {
+        if (subscribe) subscribeFor(characteristic) else unsubscribeFrom(characteristic)
+    }
+
     fun Session.subscribeFor(characteristic: Characteristic) {
         sessionSubscriptions.computeIfAbsent(this) { mutableListOf() }.add(characteristic)
         registeredCharacteristics.computeIfAbsent(characteristic) { mutableListOf() }.add(this)

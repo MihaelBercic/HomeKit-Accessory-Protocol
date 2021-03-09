@@ -1,16 +1,18 @@
-package homekit.structure
+package homekit
 
-import homekit.communication.structure.AppleServices
-import homekit.communication.structure.CharacteristicType
-import homekit.communication.structure.data.ChangeRequest
+import homekit.structure.Accessory
+import homekit.structure.data.AppleServices
+import homekit.structure.data.CharacteristicType
 
 /**
  * Created by Mihael Valentin Berčič
  * on 17/02/2021 at 16:56
  * using IntelliJ IDEA
+ *
+ * This class is a representation of the bridge itself.
+ *
+ * It has a Protocol Information with version 1.1.0, that stands for Internet Protocol.
  */
-
-
 class Bridge(ip: String) : Accessory(1) {
 
     init {
@@ -25,6 +27,6 @@ class Bridge(ip: String) : Accessory(1) {
     }
 
     override fun update() {}
-    override fun commitChanges(changeRequests: List<ChangeRequest>) {}
+    override fun commitChanges() {}
 
 }

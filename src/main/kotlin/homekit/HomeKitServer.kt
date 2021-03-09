@@ -1,20 +1,17 @@
 package homekit
 
 import homekit.communication.*
-import homekit.communication.LiveSessions.subscribeFor
-import homekit.communication.LiveSessions.unsubscribeFrom
-import homekit.communication.structure.*
-import homekit.communication.structure.data.*
 import homekit.pairing.PairSetup
 import homekit.pairing.PairVerify
 import homekit.pairing.Pairings
 import homekit.pairing.TLVErrorResponse
-import homekit.structure.Bridge
+import homekit.structure.*
+import homekit.structure.data.*
 import homekit.tlv.TLVError
-import shelly.ShellyBulb
-import shelly.ShellySwitch
+import plugins.shelly.ShellyBulb
+import plugins.shelly.ShellySwitch
+import utils.HttpMethod
 import utils.Logger
-import utils.gson
 import utils.readOrCompute
 import java.io.File
 import java.net.InetAddress
@@ -28,12 +25,12 @@ import java.net.ServerSocket
  */
 class HomeKitServer(private val settings: Settings) {
 
+    private var isRunning = true
     private val localhost = InetAddress.getLocalHost()
     private val bridgeAddress = "http://${localhost.hostAddress}:${settings.port}"
-    private var isRunning = true
     private val accessoryStorage: AccessoryStorage = AccessoryStorage(Bridge(bridgeAddress))
-    private val service = HomeKitService(settings)
     private val pairings = readOrCompute("pairings.json") { PairingStorage() }
+    private val service = HomeKitService(settings, pairings)
 
     init {
         File("bridge").mkdir()
@@ -76,6 +73,7 @@ class HomeKitServer(private val settings: Settings) {
                 }
             }
         }.start()
+        settings.increaseConfiguration()
         service.startAdvertising()
         Logger.info("Started our server...")
     }
@@ -91,35 +89,9 @@ class HomeKitServer(private val settings: Settings) {
             path == "/pair-verify" && method == HttpMethod.POST -> PairVerify.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pairings" && method == HttpMethod.POST -> Pairings.handleRequest(session, service, pairings, httpRequest.content)
             path == "/accessories" && method == HttpMethod.GET -> accessoryStorage.createHttpResponse()
+            path == "/characteristics" && method == HttpMethod.PUT -> Characteristics.resolveChangeRequests(String(httpRequest.content), accessoryStorage, session)
             path == "/characteristics" && method == HttpMethod.GET && query != null -> Characteristics.retrieve(query, accessoryStorage)
             path == "/event" && method == HttpMethod.GET -> Events.handleEvents(accessoryStorage, query, session)
-            path == "/characteristics" && method == HttpMethod.PUT -> {
-                val body = String(httpRequest.content)
-                val changeRequests = gson.fromJson(body, ChangeRequests::class.java)
-                val responses = mutableListOf<String>()
-                val characteristics = changeRequests.characteristics.groupBy { it.aid }
-
-                characteristics.forEach { (aid, characteristics) ->
-                    val accessory = accessoryStorage[aid]
-                    characteristics.forEach {
-                        val iid = it.iid
-                        val characteristic = accessory[iid]
-                        val status = when {
-                            it.events != null -> {
-                                if (it.events) session.subscribeFor(characteristic) else session.unsubscribeFrom(characteristic)
-                                0
-                            }
-                            else -> {
-                                characteristic.value = it.value
-                                0
-                            }
-                        }
-                        responses.add("{\"aid\": $aid, \"iid\":$iid, \"status\": $status}")
-                    }
-                    accessory.commitChanges(characteristics)
-                }
-                HttpResponse(207, data = "{\"characteristics\":[${responses.joinToString(",")}]}".toByteArray())
-            }
             else -> TLVErrorResponse(2, TLVError.Unknown)
         }
     }
