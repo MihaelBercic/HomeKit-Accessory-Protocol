@@ -13,7 +13,7 @@ This project implements HomeKit Accessory Protocol based on HAP Specification pr
 
 # Usage
 
-## Configuration file (config.json):
+## Example Configuration file (config.json):
 ```json
 {
   "accessories": [
@@ -28,8 +28,7 @@ This project implements HomeKit Accessory Protocol based on HAP Specification pr
       "name": "Desk Lamp",
       "type": "ShellyBulb",
       "ip": "192.168.1.138"
-    },
-    ...
+    }
   ]
 }
 
