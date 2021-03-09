@@ -48,10 +48,12 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
     }
 
     override fun commitChanges() {
-        val query = actions.map { "${it.key}=${it.value}" }.joinToString("&")
-        scheduledFuture?.cancel(true)
-        scheduledFuture = executor.schedule({ URL("http://$ip/roller/0?$query").readText() }, 1000, TimeUnit.MILLISECONDS)
-        actions.clear()
+        if (actions.isNotEmpty()) {
+            val query = actions.map { "${it.key}=${it.value}" }.joinToString("&")
+            scheduledFuture?.cancel(true)
+            scheduledFuture = executor.schedule({ URL("http://$ip/roller/0?$query").readText() }, 1000, TimeUnit.MILLISECONDS)
+            actions.clear()
+        }
     }
 
 }
