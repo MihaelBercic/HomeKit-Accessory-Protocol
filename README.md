@@ -2,7 +2,17 @@
 Readme coming after the implementation is finished.
 
 ## Required libraries:
-GSON
+- GSON
+
+This project implements HomeKit Accessory Protocol based on HAP Specification provided by Apple. 
+
+### This project uses:
+- [x] SRP (secure remote password) **implemented**
+- [x] mDNS service discovery **implemented**
+- [x] Ed25519 **implemented** 
+- [x] Curve25519 **implemented**
+
+# Usage
 
 ## Configuration file (config.json):
 ```json
