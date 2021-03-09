@@ -9,8 +9,6 @@ import java.nio.ByteBuffer
  * on 20/12/2020 at 22:43
  * using IntelliJ IDEA
  *
- * I believe these classes could have been done much more effectively and clean, but I wasn't able to come up with a
- * solid solution. Yet.
  */
 class PTRRecord(label: String, domain: String, isCached: Boolean, timeToLive: Int) : CompleteRecord(label, RecordType.PTR, isCached, timeToLive) {
 
