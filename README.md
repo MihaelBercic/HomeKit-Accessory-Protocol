@@ -6,6 +6,10 @@ Readme coming after the implementation is finished.
 
 This project implements HomeKit Accessory Protocol based on HAP Specification provided by Apple. 
 
+Preview of a working bridge with 4 accessories:
+![image](https://user-images.githubusercontent.com/13570480/110522330-10ba3d00-8111-11eb-8e0a-4853919f6d11.png)
+
+
 ### This project implements:
 - [x] SRP (secure remote password) for early pairing setup.
 - [x] mDNS service discovery for consistent service advertisement.
