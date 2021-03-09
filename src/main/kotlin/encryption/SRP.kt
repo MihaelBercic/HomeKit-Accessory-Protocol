@@ -1,10 +1,6 @@
 package encryption
 
-import utils.asBigInteger
-import utils.asByteArray
-import utils.hash
-import utils.padded
-import utils.xor
+import utils.*
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -13,6 +9,12 @@ import java.security.SecureRandom
  * Created by Mihael Valentin Berčič
  * on 31/12/2020 at 12:33
  * using IntelliJ IDEA
+ *
+ * Class is used for Secure Remote Password encryption.
+ *
+ * Conforms to the following
+ * @see <a href="https://tools.ietf.org/html/rfc2945">The SRP Authentication and Key Exchange System</a>
+ * @see <a href="https://tools.ietf.org/html/rfc5054"> Using the Secure Remote Password (SRP) Protocol for TLS Authentication</a>
  */
 class SRP {
 
@@ -47,6 +49,12 @@ class SRP {
 
     lateinit var sharedSecret: ByteArray
 
+    /**
+     * Computes SRP public key based on the [prime] and password (PIN) specified.
+     *
+     * @param password User entered PIN.
+     * @return PublicKey as [BigInteger].
+     */
     fun computePublicKey(password: String): BigInteger {
         val hashedCredentials = digest.hash(*identifier, ':'.toByte(), *password.toByteArray())
         val x = digest.hash(*salt, *hashedCredentials).asBigInteger
@@ -56,6 +64,13 @@ class SRP {
         return if (publicKey.asByteArray.size == 384) publicKey else computePublicKey(password)
     }
 
+    /**
+     * Verifies the client's public key sent by the client with the evidence (proof) the client sent.
+     *
+     * @param clientPublicKey
+     * @param clientEvidence
+     * @return Server evidence if verification was successful or BigInteger.Zero if not.
+     */
     fun verifyDevice(clientPublicKey: BigInteger, clientEvidence: BigInteger): BigInteger {
         val paddedClientPublicKey = clientPublicKey padded 384
         val paddedPublicKey = publicKey padded 384
@@ -67,10 +82,17 @@ class SRP {
         val clientPublicKeyArray = clientPublicKey.asByteArray
         val computedEvidence = computeClientEvidence(sessionKeyArray, clientPublicKeyArray)
 
-        if (computedEvidence != clientEvidence) throw Exception("Evidence do not match...")
+        if (computedEvidence != clientEvidence) return BigInteger.ZERO
         return computeServerEvidence(sessionKeyArray, clientPublicKeyArray, clientEvidence.asByteArray)
     }
 
+    /**
+     * Computes client evidence from the SessionKey and Client's Public Key used for verification.
+     *
+     * @param sessionKeyArray current SRP session key.
+     * @param clientPublicKey client's public key.
+     * @return BigInteger that is representing client evidence.
+     */
     private fun computeClientEvidence(sessionKeyArray: ByteArray, clientPublicKey: ByteArray): BigInteger {
         val hashedPrime = digest.hash(*primeArray)
         val hashedGenerator = digest.hash(*generatorArray)
@@ -87,6 +109,14 @@ class SRP {
         ).asBigInteger
     }
 
+    /**
+     * Computes server evidence (proof) for the current session.
+     *
+     * @param sessionKey current session's key.
+     * @param clientPublicKey client's public key.
+     * @param clientEvidence client's evidence (proof).
+     * @return H(CPK | CE | HSK) as [BigInteger] which represents server evidence.
+     */
     private fun computeServerEvidence(sessionKey: ByteArray, clientPublicKey: ByteArray, clientEvidence: ByteArray): BigInteger {
         val hashedSessionKey = digest.hash(*sessionKey)
         sharedSecret = hashedSessionKey

@@ -21,7 +21,6 @@ import java.nio.ByteOrder
  * on 05/02/2021 at 01:00
  * using IntelliJ IDEA
  */
-
 class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
 
     var isSecure = false

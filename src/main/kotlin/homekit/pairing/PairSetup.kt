@@ -1,21 +1,23 @@
 package homekit.pairing
 
-import utils.asBigInteger
-import utils.asByteArray
 import encryption.ChaCha
 import encryption.Ed25519
 import encryption.HKDF
-import utils.Constants
 import homekit.Settings
 import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
 import homekit.structure.data.Pairing
 import homekit.structure.storage.PairingStorage
+import homekit.tlv.TLVError
 import homekit.tlv.TLVItem
 import homekit.tlv.TLVPacket
 import homekit.tlv.Tag
+import utils.Constants
 import utils.Logger
+import utils.asBigInteger
+import utils.asByteArray
+import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -29,6 +31,15 @@ object PairSetup {
 
     private const val contentType = "application/pairing+tlv8"
 
+    /**
+     * Handles requests for pair-setup stage.
+     *
+     * @param settings bridge [Settings].
+     * @param pairings currently established pairings.
+     * @param session current [Session]
+     * @param data data sent by the current controller.
+     * @return a response containing information about current pair-setup stage.
+     */
     fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): Response {
         val packet = TLVPacket(data)
         val stateItem = packet[Tag.State]
@@ -45,8 +56,14 @@ object PairSetup {
 
     }
 
+    /**
+     * Computes pairing password (PIN), that the user enters upon pairing start.
+     *
+     * @param session current session established with the controller.
+     * @return HttpResponse containing encoded TLV packet.
+     */
     private fun computeStartingInformation(session: Session): HttpResponse {
-        val password = "111-11-111".apply { Logger.info("Pin: $this") }
+        val password = generatePin().apply { Logger.info("Pin: $this") }
         val srp = session.srp
         val publicKey = srp.computePublicKey(password)
 
@@ -59,6 +76,15 @@ object PairSetup {
         return HttpResponse(contentType = contentType, data = responsePacket.asByteArray)
     }
 
+    /**
+     * Verifies the users' entered PIN.
+     *
+     * If the proofs do not match, a TLV error packet is returned.
+     *
+     * @param session currently established session.
+     * @param packet [TLVPacket] sent by the controller through the current session.
+     * @return an encoded [TLVPacket].
+     */
     private fun verifyDeviceProof(session: Session, packet: TLVPacket): Response {
         val clientPublicKeyItem = packet[Tag.PublicKey]
         val clientEvidenceItem = packet[Tag.Proof]
@@ -67,6 +93,7 @@ object PairSetup {
         val clientKey = clientPublicKeyItem.dataArray.asBigInteger
         val clientEvidence = clientEvidenceItem.dataArray.asBigInteger
         val evidence = srp.verifyDevice(clientKey, clientEvidence)
+        if (evidence == BigInteger.ZERO) return TLVErrorResponse(4, TLVError.Authentication)
 
         val responsePacket = TLVPacket(
             TLVItem(Tag.State, 4),
@@ -77,6 +104,17 @@ object PairSetup {
         return HttpResponse(contentType = contentType, data = responsePacket.asByteArray)
     }
 
+    /**
+     * Decrypts controllers public information and computes public / private key pair.
+     *
+     * Key pairs are stored in /bridge folder.
+     *
+     * @param settings [Settings] bridge settings.
+     * @param pairings [PairingStorage] currently paired controllers.
+     * @param session [Session] currently established session.
+     * @param encryptedItem [TLVItem] encrypted TLV item sent from the controller.
+     * @return
+     */
     private fun decryptPublicInformation(settings: Settings, pairings: PairingStorage, session: Session, encryptedItem: TLVItem): HttpResponse {
         val encryptedData = encryptedItem.dataArray
         val srp = session.srp
@@ -138,6 +176,11 @@ object PairSetup {
         return HttpResponse(contentType = contentType, data = responsePacket.asByteArray)
     }
 
+    /**
+     * Generates a random PIN used for pair-setup procedure.
+     *
+     * @return A string of a randomly generated PIN of a format: "XXX-XX-XXX"
+     */
     private fun generatePin(): String {
         val random = Random()
         val first = (0..2).map { random.nextInt(9) }.joinToString("")

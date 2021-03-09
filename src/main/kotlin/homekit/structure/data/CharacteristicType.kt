@@ -6,6 +6,8 @@ import com.google.gson.annotations.SerializedName
  * Created by Mihael Valentin Berčič
  * on 14/02/2021 at 12:48
  * using IntelliJ IDEA
+ *
+ * This enum is holding types of Characteristics specified by HomeKit Accessory Protocol.
  */
 enum class CharacteristicType(
     val defaultValue: Any?,
