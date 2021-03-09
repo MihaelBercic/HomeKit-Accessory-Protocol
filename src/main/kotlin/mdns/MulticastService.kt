@@ -10,6 +10,12 @@ import java.net.*
  * Created by Mihael Valentin Berčič
  * on 21/12/2020 at 13:42
  * using IntelliJ IDEA
+ *
+ * This class serves as a structure to be used for specific service advertisements.
+ *
+ * @see <a href="https://tools.ietf.org/html/rfc6762">Multicast DNS RFC</a>
+ * @see <a href="https://tools.ietf.org/html/rfc6763">DNS-Based Service Discovery RFC</a>
+ *
  */
 abstract class MulticastService(val protocol: String, val localhost: InetAddress) {
 
@@ -23,6 +29,11 @@ abstract class MulticastService(val protocol: String, val localhost: InetAddress
 
     open val wakeUpPacket: MulticastDnsPacket? = null
 
+    /**
+     * Start advertising and responding to queries looking for the specific service.
+     *
+     * Currently works on IPv4 with the destination of: 224.0.0.251 and a multicast port 5353
+     */
     fun startAdvertising() {
         MulticastSocket(mDNS).apply {
             timeToLive = 255
