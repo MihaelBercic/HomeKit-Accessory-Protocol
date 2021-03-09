@@ -1,4 +1,4 @@
-package homekit.structure.data
+package homekit.structure.storage
 
 import com.google.gson.annotations.Expose
 import homekit.communication.HttpResponse

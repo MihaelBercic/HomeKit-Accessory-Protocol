@@ -1,6 +1,6 @@
 package homekit
 
-import homekit.structure.data.PairingStorage
+import homekit.structure.storage.PairingStorage
 import mdns.MulticastService
 import mdns.packet.MulticastDnsPacket
 import mdns.packet.MulticastDnsPacketHeader
@@ -19,8 +19,9 @@ import kotlin.random.Random
  * Created by Mihael Valentin Berčič
  * on 22/12/2020 at 13:44
  * using IntelliJ IDEA
+ *
+ * This class is a representation of a HomeKit _hap._tcp.local service that will be advertised on the local network.
  */
-
 class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
 
     private val recordName = "$name.$protocol"

@@ -2,7 +2,7 @@ package homekit.communication
 
 import homekit.communication.LiveSessions.manageSubscription
 import homekit.structure.data.StatusCodes
-import homekit.structure.data.AccessoryStorage
+import homekit.structure.storage.AccessoryStorage
 import homekit.structure.data.ChangeRequests
 import homekit.structure.data.CharacteristicResponse
 import homekit.structure.data.CharacteristicsResponse

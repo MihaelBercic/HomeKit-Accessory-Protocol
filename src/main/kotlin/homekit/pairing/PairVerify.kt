@@ -8,7 +8,7 @@ import homekit.Settings
 import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
-import homekit.structure.data.PairingStorage
+import homekit.structure.storage.PairingStorage
 import homekit.tlv.TLVError
 import homekit.tlv.TLVItem
 import homekit.tlv.TLVPacket

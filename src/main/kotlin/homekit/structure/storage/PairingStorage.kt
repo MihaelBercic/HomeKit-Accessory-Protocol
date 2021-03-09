@@ -1,8 +1,16 @@
-package homekit.structure.data
+package homekit.structure.storage
 
+import homekit.structure.data.Pairing
 import utils.gson
 import java.io.File
 
+/**
+ * Created by Mihael Valentin Berčič
+ * on 14/02/2021 at 12:46
+ * using IntelliJ IDEA
+ *
+ * This class serves as a storage for all current pairings with the bridge.
+ */
 class PairingStorage(val list: MutableList<Pairing> = mutableListOf()) {
 
     val isPaired: Boolean get() = list.isNotEmpty()
@@ -23,3 +31,4 @@ class PairingStorage(val list: MutableList<Pairing> = mutableListOf()) {
     private fun save() = File("pairings.json").writeText(gson.toJson(this))
 
 }
+

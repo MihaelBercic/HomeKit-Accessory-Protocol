@@ -11,7 +11,7 @@ import homekit.communication.HttpResponse
 import homekit.communication.Response
 import homekit.communication.Session
 import homekit.structure.data.Pairing
-import homekit.structure.data.PairingStorage
+import homekit.structure.storage.PairingStorage
 import homekit.tlv.TLVItem
 import homekit.tlv.TLVPacket
 import homekit.tlv.Tag
@@ -27,8 +27,7 @@ import java.util.*
  */
 object PairSetup {
 
-    private val contentType = "application/pairing+tlv8"
-
+    private const val contentType = "application/pairing+tlv8"
 
     fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): Response {
         val packet = TLVPacket(data)

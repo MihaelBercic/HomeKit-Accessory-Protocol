@@ -1,7 +1,7 @@
 package homekit.communication
 
 import homekit.communication.LiveSessions.subscribedSessions
-import homekit.structure.data.AccessoryStorage
+import homekit.structure.storage.AccessoryStorage
 import homekit.structure.data.CharacteristicResponse
 import homekit.structure.data.CharacteristicsResponse
 import utils.ResponseType

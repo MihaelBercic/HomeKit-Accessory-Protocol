@@ -8,7 +8,6 @@ import com.google.gson.annotations.SerializedName
  * on 14/02/2021 at 12:46
  * using IntelliJ IDEA
  */
-
 data class ChangeRequest(
     @Expose val aid: Int,
     @Expose val iid: Long,
