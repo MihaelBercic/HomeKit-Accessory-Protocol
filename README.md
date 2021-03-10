@@ -3,6 +3,8 @@
 ## Required dependencies:
 - [GSON](https://github.com/google/gson)
 
+---
+
 This project implements HomeKit Accessory Protocol based on HAP Specification provided by Apple. 
 
 Preview of a working bridge with 4 accessories:
@@ -33,4 +35,4 @@ Preview of a working bridge with 4 accessories:
   ]
 }
 ```
-**Note:** Ids should all be > 1 (greater than one and unique) due to `id = 1` belonging to the bridge itself.
+**Note:** Ids should all be > 1 (greater than one and unique) due to `id = 1` belonging to the bridge itself
