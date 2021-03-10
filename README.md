@@ -1,12 +1,10 @@
 # HomeKit Accessory Protocol (HAP)
+HomeKit Accessory Protocol based on HAP Specification provided by Apple. 
 
 ## Required dependencies:
 - [GSON](https://github.com/google/gson)
 
 ---
-
-This project implements HomeKit Accessory Protocol based on HAP Specification provided by Apple. 
-
 Preview of a working bridge with 4 accessories:
 
 <img src="https://user-images.githubusercontent.com/13570480/110522330-10ba3d00-8111-11eb-8e0a-4853919f6d11.png" width="200">
