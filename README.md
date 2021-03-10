@@ -1,8 +1,7 @@
 # HomeKit Accessory Protocol (HAP)
-Readme coming after the implementation is finished.
 
 ## Required dependencies:
-- GSON
+- [GSON](https://github.com/google/gson)
 
 This project implements HomeKit Accessory Protocol based on HAP Specification provided by Apple. 
 
@@ -10,12 +9,10 @@ Preview of a working bridge with 4 accessories:
 
 <img src="https://user-images.githubusercontent.com/13570480/110522330-10ba3d00-8111-11eb-8e0a-4853919f6d11.png" width="200">
 
-### This project implements:
+## This project implements:
 - [x] SRP (secure remote password) for early pairing setup.
 - [x] mDNS service discovery for consistent service advertisement.
 - [x] Ed25519 and Curve25519 for consistent and encrypted communication between controllers and the bridge.
-
-# Usage
 
 ## Example Configuration file (config.json):
 ```json
