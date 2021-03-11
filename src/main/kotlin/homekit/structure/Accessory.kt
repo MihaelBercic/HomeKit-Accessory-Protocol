@@ -6,6 +6,17 @@ import homekit.structure.data.CharacteristicType
 import utils.NetworkRequestType
 import utils.urlRequest
 
+/**
+ * Created by Mihael Valentin Berčič
+ * on 14/02/2021 at 13:48
+ * using IntelliJ IDEA
+ * This class represents the physical accessory such as lamps, rollers, switches and so on.
+ *
+ * In this class you setup the interaction with the physical devices.
+ *
+ * @property aid Accessory ID provided by the user in the configuration file.
+ * @property ip Accessory IP address provided by the user in the configuration file.
+ */
 abstract class Accessory(@Expose val aid: Int, val ip: String = "") {
 
     @Expose
