@@ -1,7 +1,7 @@
 package plugins.shelly
 
 import homekit.structure.Accessory
-import homekit.structure.data.AppleServices
+import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
 import utils.NetworkRequestType
 import utils.gson
@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
+class ShellyRoller(aid: Int, ip: String) : Accessory(aid, ip) {
 
     private val actions = mutableMapOf<String, Any>()
     private val executor = Executors.newSingleThreadScheduledExecutor()
@@ -21,7 +21,7 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
         registerInformation("Shelly Switch", "1.0.0", "1.0", "Shelly", "Switch", "Sh3lly")
 
-        addService(windowCoveringServiceId, AppleServices.WindowCovering) {
+        addService(windowCoveringServiceId, ServiceType.WindowCovering) {
             val state = add(CharacteristicType.PositionState)
             val position = add(CharacteristicType.CurrentPosition)
             val target = add(CharacteristicType.TargetPosition) {
@@ -40,7 +40,7 @@ class ShellySwitch(aid: Int, ip: String) : Accessory(aid, ip) {
     override fun update() {
         sendRequest(NetworkRequestType.GET, "/roller/0") { _, body ->
             getService(2) {
-                val data = gson.fromJson(body, ShellySwitchStatus::class.java)
+                val data = gson.fromJson(body, ShellyRollerStatus::class.java)
                 set(CharacteristicType.CurrentPosition) { data.position }
                 set(CharacteristicType.TargetPosition) { data.position }
             }

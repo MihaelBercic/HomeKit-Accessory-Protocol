@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
  * on 14/02/2021 at 12:41
  * using IntelliJ IDEA
  */
-enum class AppleServices(val value: Int) {
+enum class ServiceType(val value: Int) {
 
     @SerializedName("3E")
     AccessoryInformation(0x3E),

@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
  * on 03/03/2021 at 12:49
  * using IntelliJ IDEA
  */
-data class ShellySwitchStatus(
+data class ShellyRollerStatus(
     @SerializedName("current_pos")
     val position: Int = 0
 )

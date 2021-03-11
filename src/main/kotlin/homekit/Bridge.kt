@@ -1,7 +1,7 @@
 package homekit
 
 import homekit.structure.Accessory
-import homekit.structure.data.AppleServices
+import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
 
 /**
@@ -21,7 +21,7 @@ class Bridge(ip: String) : Accessory(1) {
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
         registerInformation("Bridge", "1.0.0", "1.0.0", "Bridge", "Mihael", "M1H43L")
-        addService(2, AppleServices.ProtocolInformation) {
+        addService(2, ServiceType.ProtocolInformation) {
             add(CharacteristicType.Version, "1.1.0")
         }
     }

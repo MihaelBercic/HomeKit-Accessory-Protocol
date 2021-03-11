@@ -38,11 +38,10 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
     private lateinit var controllerToAccessoryKey: ByteArray
 
     private val inputStream = socket.getInputStream()
-    private val outputStream = socket.getOutputStream().buffered()
+    private val outputStream = socket.getOutputStream()
 
     init {
         try {
-            socket.tcpNoDelay = true
             while (!shouldClose) {
                 val aad = inputStream.readNBytes(2)
                 if (aad.isEmpty()) {

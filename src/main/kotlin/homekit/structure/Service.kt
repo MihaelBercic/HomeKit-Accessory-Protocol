@@ -1,11 +1,11 @@
 package homekit.structure
 
 import com.google.gson.annotations.Expose
-import homekit.structure.data.AppleServices
+import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
 
 open class Service(
-    @Expose val type: AppleServices,
+    @Expose val type: ServiceType,
     private val accessory: Accessory,
     @Expose val iid: Long,
     @Expose val primary: Boolean = false,

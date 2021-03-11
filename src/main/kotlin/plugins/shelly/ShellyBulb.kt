@@ -1,9 +1,8 @@
 package plugins.shelly
 
 import homekit.structure.Accessory
-import homekit.structure.data.AppleServices
+import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
-import homekit.structure.data.ChangeRequest
 import utils.Logger
 import utils.NetworkRequestType
 import utils.gson
@@ -18,7 +17,7 @@ class ShellyBulb(aid: Int, ip: String) : Accessory(aid, ip) {
     private var scheduledFuture: ScheduledFuture<out Any>? = null
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
-        addService(2, AppleServices.LightBulb).apply {
+        addService(2, ServiceType.LightBulb).apply {
             registerInformation("Bulb", "1.0.0", "1.0.0", "Shelly", "LightBulb", "ABCDEFG") {
                 Logger.info("Identifying our light bulb!")
             }

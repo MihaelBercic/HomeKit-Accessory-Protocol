@@ -11,7 +11,7 @@ import homekit.structure.storage.AccessoryStorage
 import homekit.structure.storage.PairingStorage
 import homekit.tlv.TLVError
 import plugins.shelly.ShellyBulb
-import plugins.shelly.ShellySwitch
+import plugins.shelly.ShellyRoller
 import utils.HttpMethod
 import utils.Logger
 import utils.readOrCompute
@@ -52,7 +52,7 @@ class HomeKitServer(private val settings: Settings) {
 
             val accessory = when (type) {
                 "ShellyBulb" -> ShellyBulb(id, ip)
-                "ShellySwitch" -> ShellySwitch(id, ip)
+                "ShellySwitch" -> ShellyRoller(id, ip)
                 else -> throw Exception("Accessory type of $type is not supported.")
             }
 

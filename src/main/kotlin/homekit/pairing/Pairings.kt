@@ -86,7 +86,6 @@ object Pairings {
         Logger.info("On removing pairing, method used: $method for the identifier $identifier. Is it coming from admin? $isAdmin")
         if (!isAdmin) return TLVErrorResponse(2, TLVError.Authentication)
         storage.removePairing(identifier)
-        session.shouldClose = true
         if (!storage.isPaired) homeKitService.updateTextRecords(false)
         return Response(TLVPacket(TLVItem(Tag.State, 2)).asByteArray)
     }
