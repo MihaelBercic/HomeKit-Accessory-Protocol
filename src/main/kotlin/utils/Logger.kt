@@ -1,5 +1,8 @@
 package utils
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 /**
  * Created by Mihael Valentin Berčič
  * on 17/02/2021 at 18:52
@@ -11,6 +14,7 @@ private val timestamp: String get() = System.currentTimeMillis().toChunkedTimeSt
 object Logger {
 
     private var isLoggingEnabled = true
+    private val timeFormat = DateTimeFormatter.ofPattern("dd. MM | HH:mm:ss.SSS")
 
     const val red = "\u001b[31m"
     const val blue = "\u001B[34;1m"
@@ -31,7 +35,7 @@ object Logger {
      */
     private fun log(message: Any, color: String = black) {
         if (!isLoggingEnabled) return
-        val timestamp = padRight(timestamp)
+        val timestamp = LocalDateTime.now().format(timeFormat).padEnd(11)
         println("$color[$timestamp]$reset\t$message")
     }
 
@@ -39,7 +43,5 @@ object Logger {
     fun debug(message: Any) = log(message, blue)
     fun error(message: Any) = log(message, red)
     fun trace(message: Any) = log(message, yellow)
-
-    private fun padRight(string: String) = string.padEnd(11)
 
 }

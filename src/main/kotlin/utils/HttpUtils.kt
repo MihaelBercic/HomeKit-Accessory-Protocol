@@ -14,7 +14,7 @@ class HttpRequest(val headers: HttpHeaders, val content: ByteArray)
 
 open class Response(open val data: ByteArray = ByteArray(0))
 
-class HttpResponse(code: Int = 200, contentType: String = "application/hap+json", type: ResponseType = ResponseType.Http, vararg data: Byte = ByteArray(0)) :
+open class HttpResponse(code: Int = 200, contentType: String = "application/hap+json", type: ResponseType = ResponseType.Http, vararg data: Byte = ByteArray(0)) :
     Response("${type.data} $code\r\nContent-Type: $contentType\r\nContent-Length: ${data.size}\r\n\r\n".toByteArray() + data)
 
 

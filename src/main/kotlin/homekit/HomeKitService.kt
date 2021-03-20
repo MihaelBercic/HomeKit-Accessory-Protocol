@@ -9,6 +9,7 @@ import mdns.records.PTRRecord
 import mdns.records.SRVRecord
 import mdns.records.TXTRecord
 import mdns.records.structure.RecordType
+import utils.Logger
 import java.lang.Thread.sleep
 import java.net.DatagramPacket
 import java.net.InetAddress
@@ -36,7 +37,7 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
         put("md", name)
         put("pv", "1.1")
         put("s#", "1")
-        put("sf", if (pairingStorage.isPaired) 0 else 1)
+        put("sf", if (pairingStorage.isPaired.apply { Logger.info("Is paired? ${pairingStorage.isPaired}") }) 0 else 1)
         put("ci", 2)
     }
 

@@ -1,8 +1,8 @@
 package homekit.structure
 
 import com.google.gson.annotations.Expose
-import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
+import homekit.structure.data.ServiceType
 import utils.NetworkRequestType
 import utils.urlRequest
 
@@ -17,7 +17,7 @@ import utils.urlRequest
  * @property aid Accessory ID provided by the user in the configuration file.
  * @property ip Accessory IP address provided by the user in the configuration file.
  */
-abstract class Accessory(@Expose val aid: Int, val ip: String = "") {
+abstract class Accessory(@Expose val aid: Int, val name: String, val ip: String = "") {
 
     @Expose
     private val services = mutableListOf<Service>()
@@ -75,7 +75,7 @@ abstract class Accessory(@Expose val aid: Int, val ip: String = "") {
 
     operator fun get(iid: Long) = mappedCharacteristics[iid] ?: throw Exception("This characteristic does not exist.")
 
-    internal fun registerInformation(name: String, firmware: String, version: String, manufacturer: String, model: String, serialNumber: String, onIdentify: Characteristic.() -> Unit = {}) =
+    internal fun registerInformation(firmware: String, version: String, manufacturer: String, model: String, serialNumber: String, onIdentify: Characteristic.() -> Unit = {}) =
         addService(1, ServiceType.AccessoryInformation).apply {
             add(CharacteristicType.Name, name)
             add(CharacteristicType.FirmwareRevision, firmware)

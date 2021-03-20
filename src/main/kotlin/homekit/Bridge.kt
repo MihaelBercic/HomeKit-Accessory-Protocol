@@ -1,8 +1,8 @@
 package homekit
 
 import homekit.structure.Accessory
-import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
+import homekit.structure.data.ServiceType
 
 /**
  * Created by Mihael Valentin Berčič
@@ -13,14 +13,14 @@ import homekit.structure.data.CharacteristicType
  *
  * It has a Protocol Information with version 1.1.0, that stands for Internet Protocol.
  */
-class Bridge(ip: String) : Accessory(1) {
+class Bridge(ip: String) : Accessory(1, "Bridge") {
 
     init {
         setup(bridgeAddress = ip)
     }
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
-        registerInformation("Bridge", "1.0.0", "1.0.0", "Bridge", "Mihael", "M1H43L")
+        registerInformation("1.0.0", "1.0.0", "Bridge", "Mihael", "M1H43L")
         addService(2, ServiceType.ProtocolInformation) {
             add(CharacteristicType.Version, "1.1.0")
         }

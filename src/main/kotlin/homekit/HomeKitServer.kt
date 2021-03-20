@@ -15,6 +15,7 @@ import plugins.shelly.ShellyRoller
 import utils.HttpMethod
 import utils.Logger
 import utils.readOrCompute
+import utils.require
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -43,7 +44,8 @@ class HomeKitServer(private val settings: Settings) {
 
         readOrCompute("config.json") { Configuration() }.accessoryData.forEach { data ->
             val ip = data.require<String>("ip") { "IP is required for each accessory!" }
-            val type = data.require<String>("type") { "Accessory type has to be specified for each accessory!" }
+            val name = data.require<String>("name") { "Name has to be specified for each accessory!" }
+            val type = data.require<String>("type") { "Type has to be specified for each accessory!" }
             val id = data.require<Int>("id") { "A unique Accessory ID (aid) has to be specified for each accessory!" }
 
             if (id <= 1 || accessoryStorage.contains(id)) {
@@ -51,8 +53,8 @@ class HomeKitServer(private val settings: Settings) {
             }
 
             val accessory = when (type) {
-                "ShellyBulb" -> ShellyBulb(id, ip)
-                "ShellySwitch" -> ShellyRoller(id, ip)
+                "ShellyBulb" -> ShellyBulb(id, name, ip)
+                "ShellySwitch" -> ShellyRoller(id, name, ip)
                 else -> throw Exception("Accessory type of $type is not supported.")
             }
 
@@ -60,7 +62,7 @@ class HomeKitServer(private val settings: Settings) {
                 setup(data, bridgeAddress)
                 update()
                 accessoryStorage.addAccessory(this)
-                Logger.debug("Successfully registered $ip with aid $id and type $type.")
+                Logger.debug("Successfully registered ${ip.padEnd(13)} with aid $id and type $type.")
             }
         }
         Thread {
@@ -78,6 +80,7 @@ class HomeKitServer(private val settings: Settings) {
         settings.increaseConfiguration()
         service.startAdvertising()
         Logger.info("Started our server...")
+        println(accessoryStorage.asJson)
     }
 
     fun handle(httpRequest: HttpRequest, session: Session): Response {
@@ -85,7 +88,7 @@ class HomeKitServer(private val settings: Settings) {
         val method = headers.httpMethod
         val path = headers.path
         val query = headers.query
-        Logger.apply { debug("$green${session.remoteSocketAddress}$reset [$magenta$method$reset] $path $yellow$query$reset") }
+        Logger.apply { debug("$green${session.remoteSocketAddress.toString().padEnd(20)}$reset [$magenta$method$reset] $path $yellow$query$reset") }
         return when {
             path == "/pair-setup" && method == HttpMethod.POST -> PairSetup.handleRequest(settings, pairings, session, httpRequest.content)
             path == "/pair-verify" && method == HttpMethod.POST -> PairVerify.handleRequest(settings, pairings, session, httpRequest.content)
@@ -98,11 +101,4 @@ class HomeKitServer(private val settings: Settings) {
         }
     }
 
-    private inline fun <reified T> Map<String, Any>.require(key: String, message: () -> String): T {
-        val value = this[key] ?: throw Exception(message())
-        return when (T::class) {
-            Int::class -> (value as Double).toInt() as T
-            else -> value as T
-        }
-    }
 }

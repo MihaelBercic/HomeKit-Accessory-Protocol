@@ -40,7 +40,7 @@ object PairSetup {
      * @param data data sent by the current controller.
      * @return a response containing information about current pair-setup stage.
      */
-    fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): Response {
+    fun handleRequest(settings: Settings, pairings: PairingStorage, session: Session, data: ByteArray): HttpResponse {
         val packet = TLVPacket(data)
         val stateItem = packet[Tag.State]
         val requestedValue = stateItem.dataList[0].toInt()
@@ -85,7 +85,7 @@ object PairSetup {
      * @param packet [TLVPacket] sent by the controller through the current session.
      * @return an encoded [TLVPacket].
      */
-    private fun verifyDeviceProof(session: Session, packet: TLVPacket): Response {
+    private fun verifyDeviceProof(session: Session, packet: TLVPacket): HttpResponse {
         val clientPublicKeyItem = packet[Tag.PublicKey]
         val clientEvidenceItem = packet[Tag.Proof]
         val srp = session.srp

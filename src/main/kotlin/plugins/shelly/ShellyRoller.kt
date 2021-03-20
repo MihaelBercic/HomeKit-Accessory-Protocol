@@ -1,8 +1,8 @@
 package plugins.shelly
 
 import homekit.structure.Accessory
-import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
+import homekit.structure.data.ServiceType
 import utils.NetworkRequestType
 import utils.gson
 import java.net.URL
@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class ShellyRoller(aid: Int, ip: String) : Accessory(aid, ip) {
+class ShellyRoller(aid: Int, name: String, ip: String) : Accessory(aid, "ShellySwitch", ip) {
 
     private val actions = mutableMapOf<String, Any>()
     private val executor = Executors.newSingleThreadScheduledExecutor()
@@ -19,7 +19,7 @@ class ShellyRoller(aid: Int, ip: String) : Accessory(aid, ip) {
     private val windowCoveringServiceId = 2
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
-        registerInformation("Shelly Switch", "1.0.0", "1.0", "Shelly", "Switch", "Sh3lly")
+        registerInformation("1.0.0", "1.0", "Shelly", "Switch", "Sh3lly")
 
         addService(windowCoveringServiceId, ServiceType.WindowCovering) {
             val state = add(CharacteristicType.PositionState)

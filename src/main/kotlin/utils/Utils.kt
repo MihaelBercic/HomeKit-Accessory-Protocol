@@ -131,3 +131,11 @@ fun urlRequest(type: NetworkRequestType, url: String, body: Any, callback: (code
 val gson: Gson = GsonBuilder().create()
 val appleGson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 val DatagramPacket.asPacket get() = PacketReader(this).buildPacket()
+
+inline fun <reified T> Map<String, Any>.require(key: String, message: () -> String): T {
+    val value = this[key] ?: throw Exception(message())
+    return when (T::class) {
+        Int::class -> (value as Double).toInt() as T
+        else -> value as T
+    }
+}

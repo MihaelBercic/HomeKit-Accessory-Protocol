@@ -1,8 +1,8 @@
 package plugins.shelly
 
 import homekit.structure.Accessory
-import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
+import homekit.structure.data.ServiceType
 import utils.Logger
 import utils.NetworkRequestType
 import utils.gson
@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class ShellyBulb(aid: Int, ip: String) : Accessory(aid, ip) {
+class ShellyBulb(aid: Int, name: String, ip: String) : Accessory(aid, "Bulb", ip) {
 
     private val actions = mutableMapOf<String, Any>()
     private val executor = Executors.newSingleThreadScheduledExecutor()
@@ -18,7 +18,7 @@ class ShellyBulb(aid: Int, ip: String) : Accessory(aid, ip) {
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
         addService(2, ServiceType.LightBulb).apply {
-            registerInformation("Bulb", "1.0.0", "1.0.0", "Shelly", "LightBulb", "ABCDEFG") {
+            registerInformation("1.0.0", "1.0.0", "Shelly", "LightBulb", "ABCDEFG") {
                 Logger.info("Identifying our light bulb!")
             }
 
