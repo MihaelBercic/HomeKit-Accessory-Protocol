@@ -32,7 +32,7 @@ class ShellyRoller(aid: Int, name: String, ip: String) : Accessory(aid, "ShellyS
             }
 
             val query = "${target.iid},${state.iid},${position.iid}"
-            val notificationStopUrl = "/settings/roller/0?roller_stop_url=$bridgeAddress/event?$aid:$query"
+            val notificationStopUrl = "/settings/actions?index=0&name=roller_stop_url&enabled=true&urls[]=$bridgeAddress/event?$aid:$query"
             sendRequest(NetworkRequestType.GET, notificationStopUrl)
         }
     }
