@@ -28,7 +28,7 @@ object Characteristics {
         val responses = querySplit.split(",")
             .map {
                 val split = it.split(".")
-                val aid = split[0].toInt()
+                val aid = split[0].toLong()
                 val cid = split[1].toLong()
                 val accessory = storage[aid]
                 val characteristic = accessory[cid]

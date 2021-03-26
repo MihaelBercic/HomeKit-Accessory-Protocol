@@ -1,6 +1,5 @@
 package homekit.pairing
 
-import utils.asByteArray
 import encryption.ChaCha
 import encryption.Curve25519
 import encryption.Ed25519
@@ -13,6 +12,7 @@ import homekit.tlv.TLVError
 import homekit.tlv.TLVItem
 import homekit.tlv.TLVPacket
 import homekit.tlv.Tag
+import utils.asByteArray
 import java.nio.ByteBuffer
 
 

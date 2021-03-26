@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class ShellyBulb(aid: Int, name: String, ip: String) : Accessory(aid, "Bulb", ip) {
+class ShellyBulb(aid: Long, name: String, ip: String) : Accessory(aid, name, ip) {
 
     private val actions = mutableMapOf<String, Any>()
     private val executor = Executors.newSingleThreadScheduledExecutor()

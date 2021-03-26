@@ -10,13 +10,13 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class ShellyRoller(aid: Int, name: String, ip: String) : Accessory(aid, "ShellySwitch", ip) {
+class ShellyRoller(aid: Long, name: String, ip: String) : Accessory(aid, name, ip) {
 
     private val actions = mutableMapOf<String, Any>()
     private val executor = Executors.newSingleThreadScheduledExecutor()
     private var scheduledFuture: ScheduledFuture<out Any>? = null
 
-    private val windowCoveringServiceId = 2
+    private val windowCoveringServiceId = 2L
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
         registerInformation("1.0.0", "1.0", "Shelly", "Switch", "Sh3lly")

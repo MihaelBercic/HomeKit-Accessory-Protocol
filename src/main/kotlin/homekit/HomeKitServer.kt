@@ -46,15 +46,16 @@ class HomeKitServer(private val settings: Settings) {
             val ip = data.require<String>("ip") { "IP is required for each accessory!" }
             val name = data.require<String>("name") { "Name has to be specified for each accessory!" }
             val type = data.require<String>("type") { "Type has to be specified for each accessory!" }
-            val id = data.require<Int>("id") { "A unique Accessory ID (aid) has to be specified for each accessory!" }
+            val mac = data.require<String>("mac") { "An accessory MAC address has to be specified for each accessory!" }
+            val macAsNumber = mac.replace(":", "").toLong(16)
 
-            if (id <= 1 || accessoryStorage.contains(id)) {
+            if (macAsNumber <= 1 || accessoryStorage.contains(macAsNumber)) {
                 throw Exception("Accessory ID should be larger than 1 and unique!")
             }
 
             val accessory = when (type) {
-                "ShellyBulb" -> ShellyBulb(id, name, ip)
-                "ShellySwitch" -> ShellyRoller(id, name, ip)
+                "ShellyBulb" -> ShellyBulb(macAsNumber, name, ip)
+                "ShellySwitch" -> ShellyRoller(macAsNumber, name, ip)
                 else -> throw Exception("Accessory type of $type is not supported.")
             }
 
@@ -62,7 +63,7 @@ class HomeKitServer(private val settings: Settings) {
                 setup(data, bridgeAddress)
                 update()
                 accessoryStorage.addAccessory(this)
-                Logger.debug("Successfully registered ${ip.padEnd(13)} with aid $id and type $type.")
+                Logger.debug("Successfully registered ${ip.padEnd(13)} with aid $macAsNumber and type $type.")
             }
         }
         Thread {
@@ -77,10 +78,10 @@ class HomeKitServer(private val settings: Settings) {
                 }
             }
         }.start()
-        settings.increaseConfiguration()
+        settings.increaseConfiguration() // TODO modify
         service.startAdvertising()
         Logger.info("Started our server...")
-        println(accessoryStorage.asJson)
+        Logger.info(accessoryStorage.asJson)
     }
 
     fun handle(httpRequest: HttpRequest, session: Session): Response {

@@ -1,9 +1,9 @@
 package homekit.communication
 
 import homekit.communication.LiveSessions.subscribedSessions
-import homekit.structure.storage.AccessoryStorage
 import homekit.structure.data.CharacteristicResponse
 import homekit.structure.data.CharacteristicsResponse
+import homekit.structure.storage.AccessoryStorage
 import utils.Logger
 import utils.ResponseType
 import utils.appleGson
@@ -19,7 +19,7 @@ object Events {
         if (query == null) throw Exception("Query missing for event!")
         session.shouldClose = true
         val split = query.split(":")
-        val aid = split[0].toInt()
+        val aid = split[0].toLong()
         val accessory = storage[aid]
         accessory.update()
         val sessionsToSendTo = mutableSetOf<Session>()

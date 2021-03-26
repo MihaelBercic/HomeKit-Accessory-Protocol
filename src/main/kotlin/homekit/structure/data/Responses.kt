@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName
  * using IntelliJ IDEA
  */
 data class CharacteristicResponse(
-    @Expose val aid: Int,
+    @Expose val aid: Long,
     @Expose val iid: Long,
     @Expose val value: Any? = null,
     @Expose val format: Format? = null,

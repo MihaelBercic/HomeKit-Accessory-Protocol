@@ -1,8 +1,9 @@
 package homekit.structure
 
 import com.google.gson.annotations.Expose
-import homekit.structure.data.ServiceType
 import homekit.structure.data.CharacteristicType
+import homekit.structure.data.ServiceType
+import utils.Logger
 
 open class Service(
     @Expose val type: ServiceType,
@@ -38,10 +39,13 @@ open class Service(
      * @param onChange Block to run on value change.
      */
     fun add(type: CharacteristicType, value: Any? = type.defaultValue, onChange: Characteristic.() -> Unit = {}) =
-        Characteristic(value, type, ((iid shl 8) or type.id.toLong()), onChange).apply {
+        Characteristic(value, type, (iid.shl(8).or(type.id.toLong())), onChange).apply {
             if (alreadyExists(type)) throw Exception("Characteristic with type $this@hasValue already exists.")
             characteristics.add(this)
             characteristicMap[type] = this
+            accessory.mappedCharacteristics[iid]?.apply {
+                Logger.error("ALREADY EXISTS!")
+            }
             accessory.mappedCharacteristics[iid] = this
         }
 

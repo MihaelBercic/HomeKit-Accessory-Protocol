@@ -63,7 +63,7 @@ enum class CharacteristicType(
     CurrentPosition(0, Format.Uint8, 0x6D, Permission.Notify, Permission.PairedRead, unit = CharacteristicUnit.Percentage, min = 0, max = 100),
 
     @SerializedName("72")
-    PositionState(2, Format.Uint8, 0x72, Permission.Notify, Permission.PairedRead, unit = CharacteristicUnit.Percentage, min = 0, max = 2),
+    PositionState(2, Format.Uint8, 0x72, Permission.Notify, Permission.PairedRead, min = 0, max = 2),
 
     @SerializedName("6F")
     HoldPosition(null, Format.Boolean, 0x6F, Permission.PairedWrite)

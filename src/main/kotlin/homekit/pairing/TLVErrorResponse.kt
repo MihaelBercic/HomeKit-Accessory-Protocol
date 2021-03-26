@@ -1,7 +1,6 @@
 package homekit.pairing
 
 import homekit.communication.HttpResponse
-import homekit.communication.Response
 import homekit.tlv.TLVError
 import homekit.tlv.TLVItem
 import homekit.tlv.TLVPacket

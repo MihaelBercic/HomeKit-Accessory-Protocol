@@ -14,10 +14,10 @@ class AccessoryStorage(bridge: Accessory) {
 
     @Expose
     private val accessories: MutableList<Accessory> = mutableListOf()
-    private val accessoryMap: HashMap<Int, Accessory> = hashMapOf()
+    private val accessoryMap: HashMap<Long, Accessory> = hashMapOf()
 
-    operator fun get(aid: Int) = accessoryMap[aid] ?: throw Exception("No accessory with aid of $aid.")
-    fun contains(aid: Int) = accessoryMap.contains(aid)
+    operator fun get(aid: Long) = accessoryMap[aid] ?: throw Exception("No accessory with aid of $aid.")
+    fun contains(aid: Long) = accessoryMap.contains(aid)
 
     fun addAccessory(accessory: Accessory) {
         accessories.add(accessory)

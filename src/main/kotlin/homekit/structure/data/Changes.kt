@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName
  * using IntelliJ IDEA
  */
 data class ChangeRequest(
-    @Expose val aid: Int,
+    @Expose val aid: Long,
     @Expose val iid: Long,
     @Expose val value: Any?,
     @Expose val authData: String?,

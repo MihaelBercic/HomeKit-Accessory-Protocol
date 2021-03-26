@@ -3,7 +3,6 @@ package homekit.pairing
 import encryption.Ed25519
 import homekit.HomeKitService
 import homekit.communication.HttpResponse
-import homekit.communication.Response
 import homekit.communication.Session
 import homekit.structure.data.Pairing
 import homekit.structure.storage.PairingStorage

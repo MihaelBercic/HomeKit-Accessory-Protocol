@@ -17,11 +17,11 @@ import utils.urlRequest
  * @property aid Accessory ID provided by the user in the configuration file.
  * @property ip Accessory IP address provided by the user in the configuration file.
  */
-abstract class Accessory(@Expose val aid: Int, val name: String, val ip: String = "") {
+abstract class Accessory(@Expose val aid: Long, val name: String, val ip: String = "") {
 
     @Expose
     private val services = mutableListOf<Service>()
-    private val mappedServices = mutableMapOf<Int, Service>()
+    private val mappedServices = mutableMapOf<Long, Service>()
     val mappedCharacteristics = hashMapOf<Long, Characteristic>()
 
     /**
@@ -54,7 +54,7 @@ abstract class Accessory(@Expose val aid: Int, val name: String, val ip: String 
      */
     abstract fun commitChanges()
 
-    fun addService(id: Int, type: ServiceType, block: Service.() -> Unit = {}) = Service(type, this, ((aid shl 8) or id).toLong()).apply {
+    fun addService(id: Long, type: ServiceType, block: Service.() -> Unit = {}) = Service(type, this, ((aid shl 7) or id)).apply {
         if (services.any { it.iid == iid }) throw Exception("Service with IID $id already exists on this accessory.")
         apply(block)
         mappedServices[id] = this
@@ -68,7 +68,7 @@ abstract class Accessory(@Expose val aid: Int, val name: String, val ip: String 
      * @param serviceId Service ID to retrieve from this accessory.
      * @param block A callback what to do after successful service retrieval.
      */
-    fun getService(serviceId: Int, block: Service.() -> Unit) = mappedServices[serviceId]?.apply(block)
+    fun getService(serviceId: Long, block: Service.() -> Unit) = mappedServices[serviceId]?.apply(block)
         ?: throw Exception("Such service [$serviceId] does not exist!")
 
     fun sendRequest(type: NetworkRequestType, path: String, body: String = "", callback: (code: Int, body: String) -> Unit = { _, _ -> }) = urlRequest(type, "http://$ip$path", body, callback)
