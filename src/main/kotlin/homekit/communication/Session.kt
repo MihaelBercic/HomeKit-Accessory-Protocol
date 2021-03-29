@@ -46,7 +46,7 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
                 val aad = inputStream.readNBytes(2)
                 if (aad.isEmpty()) break
                 val shouldEncrypt = isSecure
-                val request = if (!shouldEncrypt) readHeaders(inputStream, aad).let { HttpRequest(it, inputStream.readNBytes(it.contentLength)) }
+                val request: HttpRequest = if (!shouldEncrypt) readHeaders(inputStream, aad).let { HttpRequest(it, inputStream.readNBytes(it.contentLength)) }
                 else {
                     val contentSize = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).put(aad).position(0).short.toInt()
                     val content = inputStream.readNBytes(contentSize)
@@ -69,13 +69,12 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
             close()
         } catch (e: Exception) {
             e.printStackTrace()
-            Logger.error("Closing the session due to an exception.")
             close()
         }
     }
 
     private fun close() {
-        Logger.error("Input stream has let us know it is closed. Shutting this session down.")
+        Logger.error("Input stream has let us know it is closed. Shutting this session down. [${socket.remoteSocketAddress}]")
         socket.shutdownInput()
         socket.shutdownOutput()
         inputStream.close()

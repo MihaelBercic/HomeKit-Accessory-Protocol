@@ -70,11 +70,11 @@ class HomeKitServer(private val settings: Settings) {
             ServerSocket(settings.port).apply {
                 soTimeout = 0
                 while (isRunning) {
-                    val newSocket = accept().apply {
-                        soTimeout = 0
-                        tcpNoDelay = true
-                    }
-                    Thread { Session(newSocket, this@HomeKitServer) }.start()
+                    val newSocket = accept().apply { soTimeout = 0 }
+                    Thread {
+                        val address = newSocket.remoteSocketAddress.toString()
+                        Session(newSocket, this@HomeKitServer)
+                    }.start()
                 }
             }
         }.start()

@@ -4,6 +4,7 @@ import utils.generateMAC
 import utils.readOrCompute
 
 
+
 fun main() {
     val settings = readOrCompute("settings.json") {
         Settings(1, 3000, generateMAC())

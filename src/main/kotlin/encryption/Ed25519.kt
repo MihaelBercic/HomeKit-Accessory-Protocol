@@ -34,12 +34,14 @@ object Ed25519 {
 
     fun storePublicKey(path: String, publicKey: EdECPublicKey) = File(path).writeBytes(encode(publicKey))
 
+    @Synchronized
     fun verifySignature(publicKey: EdECPublicKey, data: ByteArray, signature: ByteArray): Boolean {
         signatureInstance.initVerify(publicKey)
         signatureInstance.update(data)
         return signatureInstance.verify(signature)
     }
 
+    @Synchronized
     fun sign(private: EdECPrivateKey, data: ByteArray): ByteArray {
         signatureInstance.initSign(private)
         signatureInstance.update(data)
