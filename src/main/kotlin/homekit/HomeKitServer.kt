@@ -71,10 +71,7 @@ class HomeKitServer(private val settings: Settings) {
                 soTimeout = 0
                 while (isRunning) {
                     val newSocket = accept().apply { soTimeout = 0 }
-                    Thread {
-                        val address = newSocket.remoteSocketAddress.toString()
-                        Session(newSocket, this@HomeKitServer)
-                    }.start()
+                    Thread { Session(newSocket, this@HomeKitServer) }.start()
                 }
             }
         }.start()
