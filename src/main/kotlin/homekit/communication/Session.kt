@@ -44,7 +44,10 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
         try {
             while (!shouldClose) {
                 val aad = inputStream.readNBytes(2)
-                if (aad.isEmpty()) break
+                if (aad.isEmpty()) {
+                    Logger.error("Input stream has sent EOF!")
+                    break
+                }
                 val shouldEncrypt = isSecure
                 val request: HttpRequest = if (!shouldEncrypt) readHeaders(inputStream, aad).let { HttpRequest(it, inputStream.readNBytes(it.contentLength)) }
                 else {
@@ -66,6 +69,7 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
                 }
                 homeKitServer.handle(request, this).apply { sendMessage(this, shouldEncrypt) }
             }
+            Logger.error("Should close has been set to $shouldClose!")
             close()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -74,7 +78,7 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
     }
 
     private fun close() {
-        Logger.error("Input stream has let us know it is closed. Shutting this session down. [${socket.remoteSocketAddress}]")
+        Logger.error("Shutting this session down. [${socket.remoteSocketAddress}]")
         socket.shutdownInput()
         socket.shutdownOutput()
         inputStream.close()

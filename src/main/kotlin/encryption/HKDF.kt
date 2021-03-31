@@ -35,11 +35,13 @@ object HKDF {
 
     private fun extract(algorithm: String, salt: ByteArray, input: ByteArray): ByteArray = macWithKey(algorithm, salt).doFinal(input)
 
+    @Synchronized
     fun compute(algorithm: String, inputKeyingMaterial: ByteArray, salt: ByteArray, info: ByteArray, outputLength: Int): ByteArray {
         val hashLength = Mac.getInstance(algorithm).macLength
         val pseudoRandomKey = extract(algorithm, salt, inputKeyingMaterial)
         return expand(algorithm, pseudoRandomKey, info, hashLength, outputLength)
     }
 
+    @Synchronized
     private fun macWithKey(algorithm: String, key: ByteArray) = Mac.getInstance(algorithm).apply { init(SecretKeySpec(key, algorithm)) }
 }

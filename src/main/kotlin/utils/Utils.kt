@@ -55,6 +55,7 @@ val ByteArray.asHexString
 val Byte.asString get() = Integer.toBinaryString(toInt() and 255)
 val Byte.asHexString get() = Integer.toHexString(toInt())
 
+@Synchronized
 fun MessageDigest.hash(vararg bytes: Byte): ByteArray {
     update(bytes)
     return digest()
