@@ -20,9 +20,6 @@ import java.security.spec.NamedParameterSpec
  */
 object Ed25519 {
 
-    private val signatureInstance = Signature.getInstance("Ed25519")
-
-    @Synchronized
     fun generateKeyPair(): EdEcKeyPair {
         val keyPairGenerator = KeyPairGenerator.getInstance("Ed25519")
         val keyPair = keyPairGenerator.generateKeyPair()
@@ -35,17 +32,19 @@ object Ed25519 {
 
     fun storePublicKey(path: String, publicKey: EdECPublicKey) = File(path).writeBytes(encode(publicKey))
 
-    @Synchronized
     fun verifySignature(publicKey: EdECPublicKey, data: ByteArray, signature: ByteArray): Boolean {
-        signatureInstance.initVerify(publicKey)
-        signatureInstance.update(data)
+        val signatureInstance = Signature.getInstance("Ed25519").apply {
+            initVerify(publicKey)
+            update(data)
+        }
         return signatureInstance.verify(signature)
     }
 
-    @Synchronized
     fun sign(private: EdECPrivateKey, data: ByteArray): ByteArray {
-        signatureInstance.initSign(private)
-        signatureInstance.update(data)
+        val signatureInstance = Signature.getInstance("Ed25519").apply {
+            initSign(private)
+            update(data)
+        }
         return signatureInstance.sign()
     }
 
@@ -60,8 +59,6 @@ object Ed25519 {
 
     fun encode(privateKey: EdECPrivateKey): ByteArray = privateKey.bytes.orElseThrow()
 
-
-    @Synchronized
     fun parsePrivateKey(byteArray: ByteArray): EdECPrivateKey {
         val keySpec = EdECPrivateKeySpec(NamedParameterSpec.ED25519, byteArray)
         return KeyFactory.getInstance("Ed25519").generatePrivate(keySpec) as EdECPrivateKey
@@ -71,7 +68,6 @@ object Ed25519 {
 
     fun loadPublicKey(path: String) = parsePublicKey(File(path).readBytes())
 
-    @Synchronized
     fun parsePublicKey(byteArray: ByteArray): EdECPublicKey {
         val lastIndex = byteArray.lastIndex
         val lastByte = byteArray[lastIndex]

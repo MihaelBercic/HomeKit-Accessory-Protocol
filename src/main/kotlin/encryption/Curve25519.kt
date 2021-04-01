@@ -16,16 +16,14 @@ import javax.crypto.KeyAgreement
  */
 object Curve25519 {
 
-    @Synchronized
     fun generateKeyPair(): CurveKeyPair {
         val keyPairGenerator = KeyPairGenerator.getInstance("X25519")
-        val keyPair = keyPairGenerator.generateKeyPair();
+        val keyPair = keyPairGenerator.generateKeyPair()
         val privateKey = keyPair.private as XECPrivateKey
         val publicKey = keyPair.public as XECPublicKey
         return CurveKeyPair(privateKey, publicKey)
     }
 
-    @Synchronized
     fun decode(byteArray: ByteArray): XECPublicKey {
         val kf = KeyFactory.getInstance("X25519");
         val u = byteArray.asBigInteger
@@ -33,11 +31,13 @@ object Curve25519 {
         return kf.generatePublic(pubSpec) as XECPublicKey
     }
 
-    @Synchronized
-    fun computeSharedSecret(privateKey: XECPrivateKey, publicKey: XECPublicKey): ByteArray = KeyAgreement.getInstance("X25519").apply {
-        init(privateKey)
-        doPhase(publicKey, true)
-    }.generateSecret()
+    fun computeSharedSecret(privateKey: XECPrivateKey, publicKey: XECPublicKey): ByteArray {
+        val agreement = KeyAgreement.getInstance("X25519").apply {
+            init(privateKey)
+            doPhase(publicKey, true)
+        }
+        return agreement.generateSecret()
+    }
 
     data class CurveKeyPair(val privateKey: XECPrivateKey, val publicKey: XECPublicKey)
 

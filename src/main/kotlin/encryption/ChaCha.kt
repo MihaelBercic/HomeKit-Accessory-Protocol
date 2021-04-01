@@ -17,21 +17,21 @@ object ChaCha {
     private const val algorithm = "ChaCha20-Poly1305"
     private const val nonceLength = 12
 
-    @Synchronized
     fun encrypt(toEncode: ByteArray, key: ByteArray, aad: ByteArray = ByteArray(0)): ByteArray {
         val buffer = ByteBuffer.wrap(toEncode)
         val nonce = ByteArray(nonceLength)
         val data = ByteArray(buffer.remaining() - nonceLength)
         buffer[nonce][data]
 
+        val secretKeySpec = SecretKeySpec(key, "ChaCha20-Poly1305")
+        val ivParameterSpec = IvParameterSpec(nonce)
         val cipher = Cipher.getInstance(algorithm).apply {
-            init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "ChaCha20-Poly1305"), IvParameterSpec(nonce))
+            init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec)
             if (aad.isNotEmpty()) updateAAD(aad)
         }
         return cipher.doFinal(data)
     }
 
-    @Synchronized
     fun decrypt(encryptedData: ByteArray, key: ByteArray, aad: ByteArray = ByteArray(0)): ByteArray {
         val secretKey = SecretKeySpec(key, algorithm)
         val encryptedText = ByteArray(encryptedData.size - nonceLength)

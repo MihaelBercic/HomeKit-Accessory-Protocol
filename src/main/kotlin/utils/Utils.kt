@@ -55,12 +55,6 @@ val ByteArray.asHexString
 val Byte.asString get() = Integer.toBinaryString(toInt() and 255)
 val Byte.asHexString get() = Integer.toHexString(toInt())
 
-@Synchronized
-fun MessageDigest.hash(vararg bytes: Byte): ByteArray {
-    update(bytes)
-    return digest()
-}
-
 infix fun ByteArray.xor(b2: ByteArray): ByteArray {
     val result = ByteArray(size)
     for (i in indices) result[i] = (this[i] xor b2[i])

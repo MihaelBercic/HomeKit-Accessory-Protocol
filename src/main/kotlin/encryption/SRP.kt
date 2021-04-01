@@ -1,6 +1,9 @@
 package encryption
 
-import utils.*
+import utils.asBigInteger
+import utils.asByteArray
+import utils.padded
+import utils.xor
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -121,5 +124,10 @@ class SRP {
         val hashedSessionKey = digest.hash(*sessionKey)
         sharedSecret = hashedSessionKey
         return digest.hash(*clientPublicKey, *clientEvidence, *hashedSessionKey).asBigInteger
+    }
+
+    private fun MessageDigest.hash(vararg bytes: Byte): ByteArray {
+        update(bytes)
+        return digest()
     }
 }
