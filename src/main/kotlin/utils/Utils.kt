@@ -8,10 +8,7 @@ import java.math.BigInteger
 import java.net.DatagramPacket
 import java.net.HttpURLConnection
 import java.net.URL
-import java.security.MessageDigest
 import java.util.*
-import kotlin.experimental.xor
-import kotlin.math.pow
 
 
 /**
@@ -35,32 +32,6 @@ fun generateMAC(): String {
     return (0 until 6).joinToString(":") { Integer.toHexString(random.nextInt(255) + 1).padStart(2, '0') }.toUpperCase()
 }
 
-fun Int.bits(from: Int, count: Int): Int = (this shr from) and (2.0.pow(count) - 1).toInt()
-
-
-// To be ignored. Is code simply for debugging
-val ByteArray.asBinaryString
-    get() = "\t" + map { it.asString.padStart(8, '0') }.chunked(4).joinToString("\n\t") { it.joinToString(" ") }
-
-val ByteArray.asHexString
-    get() = toList()
-        .chunked(4)
-        .map {
-            it.joinToString("") { Integer.toHexString(it.toInt() and 255).padStart(2, '0') }
-        }
-        .chunked(4)
-        .joinToString("\n") { it.joinToString(" ") }
-
-
-val Byte.asString get() = Integer.toBinaryString(toInt() and 255)
-val Byte.asHexString get() = Integer.toHexString(toInt())
-
-infix fun ByteArray.xor(b2: ByteArray): ByteArray {
-    val result = ByteArray(size)
-    for (i in indices) result[i] = (this[i] xor b2[i])
-    return result
-}
-
 
 val String.asBigInteger get() = BigInteger(this, 16)
 val ByteArray.asBigInteger get() = BigInteger(1, this)
@@ -74,14 +45,13 @@ infix fun BigInteger.padded(length: Int): ByteArray {
     else array.copyInto(ByteArray(length), destinationOffset = difference)
 }
 
-val BigInteger.asHex get() = asByteArray.asHexString
 val BigInteger.asByteArray: ByteArray
     get() = toByteArray().let {
         assert(signum() != -1)
         if (it[0].toInt().and(255) == 0) it.copyOfRange(1, it.size) else it
     }
 
-inline fun <reified T> readOrCompute(name: String, block: () -> T) = File(name).let {
+inline fun <reified T> readOrCompute(name: String, block: () -> T): T = File(name).let {
     if (it.exists()) gson.fromJson(it.readText(), T::class.java)
     else block.invoke()
 }

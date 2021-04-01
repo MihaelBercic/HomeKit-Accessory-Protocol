@@ -3,10 +3,10 @@ package encryption
 import utils.asBigInteger
 import utils.asByteArray
 import utils.padded
-import utils.xor
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.SecureRandom
+import kotlin.experimental.xor
 
 /**
  * Created by Mihael Valentin Berčič
@@ -129,5 +129,11 @@ class SRP {
     private fun MessageDigest.hash(vararg bytes: Byte): ByteArray {
         update(bytes)
         return digest()
+    }
+
+    private infix fun ByteArray.xor(b2: ByteArray): ByteArray {
+        val result = ByteArray(size)
+        for (i in indices) result[i] = (this[i] xor b2[i])
+        return result
     }
 }

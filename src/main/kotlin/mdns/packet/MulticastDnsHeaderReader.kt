@@ -1,7 +1,7 @@
 package mdns.packet
 
-import utils.bits
 import java.nio.ByteBuffer
+import kotlin.math.pow
 
 /**
  * Created by Mihael Valentin Berčič
@@ -23,5 +23,7 @@ class MulticastDnsHeaderReader(private val buffer: ByteBuffer) {
 
         return MulticastDnsPacketHeader(id, isResponse, opcode, isAuthoritative, isTruncated, isRecursionDesired, isRecursionAvailable, responseCode)
     }
+
+    private fun Int.bits(from: Int, count: Int): Int = (this shr from) and (2.0.pow(count) - 1).toInt()
 
 }
