@@ -8,6 +8,7 @@ import mdns.records.ARecord
 import mdns.records.PTRRecord
 import mdns.records.SRVRecord
 import mdns.records.TXTRecord
+import mdns.records.structure.IncompleteRecord
 import mdns.records.structure.RecordType
 import utils.Logger
 import java.lang.Thread.sleep
@@ -28,10 +29,10 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
     private val recordName = "$name.$protocol"
     private val targetName = "$name.local"
 
-    private val tcpAnswer = PTRRecord(protocol, recordName, false, 4500)
-    private val srvRecord = SRVRecord(recordName, targetName, settings.port, timeToLive = 4500, isCached = false)
-    private val addressRecord = ARecord("$name.local", localhost.hostAddress, false, 4500)
-    private val txtRecord = TXTRecord(recordName, false, 4500) {
+    private val tcpAnswer = PTRRecord(protocol, recordName, true, 4500)
+    private val srvRecord = SRVRecord(recordName, targetName, settings.port, timeToLive = 4500, isCached = true)
+    private val addressRecord = ARecord("$name.local", localhost.hostAddress, true, 4500)
+    private val txtRecord = TXTRecord(recordName, true, 4500) {
         put("c#", settings.configurationNumber)
         put("id", settings.serverMAC)
         put("md", name)
@@ -41,13 +42,18 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
         put("ci", 2)
     }
 
-    override fun condition(packet: MulticastDnsPacket): Boolean = !packet.header.isResponse
-            && packet.queryRecords.any { it.label == protocol || it.label == recordName }
-            && packet.answerRecords.none { it.label == protocol || it.label == recordName || it.label == targetName }
+    private val recordPredicate: (T: IncompleteRecord) -> Boolean = { it.label == protocol || it.label == recordName || it.label == targetName }
+
+    override fun condition(packet: MulticastDnsPacket): Boolean {
+        if (packet.header.isResponse) return false
+        val queries = packet.queryRecords.filter(recordPredicate)
+        val answers = packet.answerRecords.filter(recordPredicate)
+        val isOutdated = answers.any { it.timeToLive.apply { Logger.info(this) } < 4400 }
+        return isOutdated || queries.any { query -> answers.none { it.label == query.label } }
+    }
 
     override fun respond(socket: MulticastSocket, datagramPacket: DatagramPacket, packet: MulticastDnsPacket) {
         val desiredQueries = packet.queryRecords.filter { it.label == protocol || it.label == recordName }
-        // Logger.info("[${datagramPacket.socketAddress}] is asking for ${desiredQueries.map { "[${if (it.hasProperty) "Unicast" else "Multicast"}] ${it.label}" }} with answers ${packet.answerRecords.map { "${it.type} ${it.label}" }}")
         val includePointer = desiredQueries.any { it.type == RecordType.PTR }
         val includeTXT = desiredQueries.any { it.type == RecordType.TXT }
         val includeSRV = desiredQueries.any { it.type == RecordType.SRV }

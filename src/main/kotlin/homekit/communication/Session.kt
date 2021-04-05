@@ -28,6 +28,7 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
     val srp = SRP()
     var currentState: Int = 1
     val remoteSocketAddress: SocketAddress = socket.remoteSocketAddress
+
     private var controllerToAccessoryCount: Long = 0
     private var accessoryToControllerCount: Long = 0
     lateinit var currentController: Pairing
@@ -45,7 +46,7 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
             while (!shouldClose) {
                 val aad = inputStream.readNBytes(2)
                 if (aad.isEmpty()) {
-                    Logger.error("Input stream has sent EOF!")
+                    Logger.error("Input stream has sent EOF! [$remoteSocketAddress]")
                     break
                 }
                 val shouldEncrypt = isSecure
@@ -152,6 +153,7 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
         val contentLength = if (lengthMatcher.find()) lengthMatcher.group("length").toInt() else 0
         val httpMethod = infoMatcher.group("method")
         val requestedPath = infoMatcher.group("path")
+
         if (httpMethod == null || requestedPath == null) throw Exception("Invalid http request.")
         val requestedMethod = HttpMethod.valueOf(httpMethod)
         val query = infoMatcher.group("query")?.drop(1)

@@ -69,7 +69,6 @@ class HomeKitServer(private val settings: Settings) {
         Thread {
             ServerSocket(settings.port).apply {
                 soTimeout = 0
-                reuseAddress = true
                 while (isRunning) {
                     val newSocket = accept().apply {
                         soTimeout = 0

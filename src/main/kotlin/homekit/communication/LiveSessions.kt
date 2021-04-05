@@ -1,7 +1,6 @@
 package homekit.communication
 
 import homekit.structure.Characteristic
-import utils.Logger
 
 /**
  * Created by Mihael Valentin Berčič
@@ -27,16 +26,14 @@ object LiveSessions {
         if (subscribe) subscribeFor(characteristic) else unsubscribeFrom(characteristic)
     }
 
-    fun Session.subscribeFor(characteristic: Characteristic) {
+    private fun Session.subscribeFor(characteristic: Characteristic) {
         sessionSubscriptions.computeIfAbsent(this) { mutableListOf() }.add(characteristic)
         registeredCharacteristics.computeIfAbsent(characteristic) { mutableListOf() }.add(this)
-        Logger.info("Subscribed ${currentController.identifier} for the ${characteristic.type}[${characteristic.iid shr 16}]")
     }
 
-    fun Session.unsubscribeFrom(characteristic: Characteristic) {
+    private fun Session.unsubscribeFrom(characteristic: Characteristic) {
         sessionSubscriptions[this]?.remove(characteristic)
         registeredCharacteristics[characteristic]?.remove(this)
-        Logger.info("Unsubscribed ${currentController.identifier} from the ${characteristic.type}[${characteristic.iid shr 16}]")
     }
 
     fun Session.removeFromLiveSessions() {
