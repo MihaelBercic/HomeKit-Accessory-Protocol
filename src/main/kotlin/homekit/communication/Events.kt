@@ -4,7 +4,6 @@ import homekit.communication.LiveSessions.subscribedSessions
 import homekit.structure.data.CharacteristicResponse
 import homekit.structure.data.CharacteristicsResponse
 import homekit.structure.storage.AccessoryStorage
-import utils.Logger
 import utils.ResponseType
 import utils.appleGson
 
@@ -30,11 +29,7 @@ object Events {
         }
         val httpResponse = HttpResponse(type = ResponseType.Event, data = appleGson.toJson(CharacteristicsResponse(responses)).toByteArray())
 
-        sessionsToSendTo.forEach {
-            Logger.debug("Sending event to ${it.remoteSocketAddress}")
-            it.sendMessage(httpResponse)
-            Logger.debug("Event sent to ${it.remoteSocketAddress}")
-        }
+        sessionsToSendTo.forEach { it.sendMessage(httpResponse) }
         return HttpResponse(200)
     }
 

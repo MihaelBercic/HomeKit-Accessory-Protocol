@@ -1,6 +1,7 @@
-package plugins.shelly
+package plugins.shelly.roller
 
 import com.google.gson.annotations.SerializedName
+import plugins.shelly.roller.PositionStates
 
 /**
  * Created by Mihael Valentin Berčič
@@ -9,5 +10,6 @@ import com.google.gson.annotations.SerializedName
  */
 data class ShellyRollerStatus(
     @SerializedName("current_pos")
-    val position: Int = 0
+    val position: Int = 0,
+    val state: PositionStates
 )

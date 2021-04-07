@@ -48,7 +48,7 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
         if (packet.header.isResponse) return false
         val queries = packet.queryRecords.filter(recordPredicate)
         val answers = packet.answerRecords.filter(recordPredicate)
-        val isOutdated = answers.any { it.timeToLive.apply { Logger.info(this) } < 4400 }
+        val isOutdated = answers.any { it.timeToLive.apply { Logger.error(this) } <= 1250 }
         return isOutdated || queries.any { query -> answers.none { it.label == query.label } }
     }
 

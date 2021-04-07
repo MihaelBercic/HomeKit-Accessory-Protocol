@@ -1,8 +1,9 @@
-package plugins.shelly
+package plugins.shelly.roller
 
 import homekit.structure.Accessory
 import homekit.structure.data.CharacteristicType
 import homekit.structure.data.ServiceType
+import utils.Logger
 import utils.NetworkRequestType
 import utils.gson
 import java.net.URL
@@ -25,10 +26,12 @@ class ShellyRoller(aid: Long, name: String, ip: String) : Accessory(aid, name, i
             val state = add(CharacteristicType.PositionState)
             val position = add(CharacteristicType.CurrentPosition)
             val target = add(CharacteristicType.TargetPosition) {
-                value?.apply {
-                    actions["go"] = "to_pos"
-                    actions["roller_pos"] = this
-                }
+                val newValue = value as Int
+                val currentValue = position.value as Int
+
+                actions["go"] = "to_pos"
+                actions["roller_pos"] = newValue
+                state.value = if (newValue < currentValue) 1 else 0
             }
 
             val query = "${target.iid},${state.iid},${position.iid}"
@@ -43,6 +46,13 @@ class ShellyRoller(aid: Long, name: String, ip: String) : Accessory(aid, name, i
                 val data = gson.fromJson(body, ShellyRollerStatus::class.java)
                 set(CharacteristicType.CurrentPosition) { data.position }
                 set(CharacteristicType.TargetPosition) { data.position }
+                set(CharacteristicType.PositionState) {
+                    when (data.state) {
+                        PositionStates.Stopped -> 2
+                        PositionStates.Closing -> 0
+                        PositionStates.Opening -> 1
+                    }
+                }
             }
         }
     }
