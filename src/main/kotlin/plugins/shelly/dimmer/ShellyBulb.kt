@@ -1,4 +1,4 @@
-package plugins.shelly
+package plugins.shelly.dimmer
 
 import homekit.structure.Accessory
 import homekit.structure.data.CharacteristicType
@@ -17,6 +17,7 @@ class ShellyBulb(aid: Long, name: String, ip: String) : Accessory(aid, name, ip)
     private var scheduledFuture: ScheduledFuture<out Any>? = null
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
+        sendRequest(NetworkRequestType.GET, "/settings?transition=10")
         addService(2, ServiceType.LightBulb).apply {
             registerInformation("1.0.0", "1.0.0", "Shelly", "LightBulb", "ABCDEFG") {
                 Logger.info("Identifying our light bulb!")

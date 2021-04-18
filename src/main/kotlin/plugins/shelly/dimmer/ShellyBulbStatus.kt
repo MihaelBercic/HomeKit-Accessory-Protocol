@@ -1,4 +1,4 @@
-package plugins.shelly
+package plugins.shelly.dimmer
 
 import com.google.gson.annotations.SerializedName
 

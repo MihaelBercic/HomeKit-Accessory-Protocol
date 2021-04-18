@@ -10,7 +10,7 @@ import homekit.structure.data.*
 import homekit.structure.storage.AccessoryStorage
 import homekit.structure.storage.PairingStorage
 import homekit.tlv.TLVError
-import plugins.shelly.ShellyBulb
+import plugins.shelly.dimmer.ShellyBulb
 import plugins.shelly.roller.ShellyRoller
 import utils.HttpMethod
 import utils.Logger
