@@ -17,20 +17,20 @@ Preview of a working bridge with 4 accessories:
 ## Example Configuration file (config.json)
 ```json
 {
-  "accessories": [
-    {
-      "id": 2,
-      "name": "Window Covering",
-      "type": "ShellySwitch",
-      "ip": "192.168.1.150"
-    },
-    {
-      "id": 3,
-      "name": "Desk Lamp",
-      "type": "ShellyBulb",
-      "ip": "192.168.1.138"
-    }
-  ]
-}
+    "accessories": [
+        {
+            "mac": "FF:AA:BB:CC:DD:EE",
+            "name": "Balcony Door",
+            "type": "ShellySwitch",
+            "ip": "192.168.1.139"
+        },
+        {
+            "mac": "FF:CC:AA:CC:DD:EE",
+            "name": "Balcony Window",
+            "type": "ShellySwitch",
+            "ip": "192.168.1.113"
+        }
+    ]
+}    
 ```
 **Note:** Ids should all be > 1 (greater than one and unique) due to `id = 1` belonging to the bridge itself
