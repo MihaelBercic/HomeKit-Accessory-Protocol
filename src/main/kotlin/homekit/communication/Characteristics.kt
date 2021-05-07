@@ -25,15 +25,16 @@ object Characteristics {
      */
     fun retrieve(query: String, storage: AccessoryStorage): HttpResponse {
         val querySplit = query.split("&")[0].replace("id=", "")
-        val responses = querySplit.split(",")
-            .map {
-                val split = it.split(".")
+        val responses = querySplit.split(",").mapNotNull {
+            val split = it.split(".")
+            if (split.size != 2) {
                 val aid = split[0].toLong()
                 val cid = split[1].toLong()
                 val accessory = storage[aid]
                 val characteristic = accessory[cid]
                 CharacteristicResponse(aid, cid, characteristic.value, status = StatusCodes.Success.value)
-            }
+            } else null
+        }
         return HttpResponse(207, data = appleGson.toJson(CharacteristicsResponse(responses)).toByteArray())
     }
 

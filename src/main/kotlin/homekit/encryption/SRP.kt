@@ -1,4 +1,4 @@
-package encryption
+package homekit.encryption
 
 import utils.asBigInteger
 import utils.asByteArray
@@ -13,7 +13,7 @@ import kotlin.experimental.xor
  * on 31/12/2020 at 12:33
  * using IntelliJ IDEA
  *
- * Class is used for Secure Remote Password encryption.
+ * Class is used for Secure Remote Password homekit.encryption.
  *
  * Conforms to the following
  * @see <a href="https://tools.ietf.org/html/rfc2945">The SRP Authentication and Key Exchange System</a>

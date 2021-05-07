@@ -1,8 +1,8 @@
 package homekit.pairing
 
-import encryption.ChaCha
-import encryption.Curve25519
-import encryption.Ed25519
+import homekit.encryption.ChaCha
+import homekit.encryption.Curve25519
+import homekit.encryption.Ed25519
 import homekit.Settings
 import homekit.communication.HttpResponse
 import homekit.communication.Response

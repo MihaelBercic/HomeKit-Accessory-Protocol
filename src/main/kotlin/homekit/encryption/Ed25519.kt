@@ -1,4 +1,4 @@
-package encryption
+package homekit.encryption
 
 import utils.asBigInteger
 import utils.asByteArray

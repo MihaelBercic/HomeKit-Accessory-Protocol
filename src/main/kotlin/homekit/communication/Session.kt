@@ -1,8 +1,8 @@
 package homekit.communication
 
-import encryption.ChaCha
-import encryption.HKDF
-import encryption.SRP
+import homekit.encryption.ChaCha
+import homekit.encryption.HKDF
+import homekit.encryption.SRP
 import homekit.HomeKitServer
 import homekit.communication.LiveSessions.removeFromLiveSessions
 import homekit.communication.LiveSessions.secureSessionStarted

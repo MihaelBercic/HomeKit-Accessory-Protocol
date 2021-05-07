@@ -1,4 +1,4 @@
-package encryption
+package homekit.encryption
 
 import java.nio.ByteBuffer
 import javax.crypto.Mac

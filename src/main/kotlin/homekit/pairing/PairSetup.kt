@@ -1,8 +1,8 @@
 package homekit.pairing
 
-import encryption.ChaCha
-import encryption.Ed25519
-import encryption.HKDF
+import homekit.encryption.ChaCha
+import homekit.encryption.Ed25519
+import homekit.encryption.HKDF
 import homekit.Settings
 import homekit.communication.HttpResponse
 import homekit.communication.Session

@@ -1,6 +1,6 @@
 package homekit.pairing
 
-import encryption.Ed25519
+import homekit.encryption.Ed25519
 import homekit.HomeKitService
 import homekit.communication.HttpResponse
 import homekit.communication.Session
