@@ -27,7 +27,7 @@ object Characteristics {
         val querySplit = query.split("&")[0].replace("id=", "")
         val responses = querySplit.split(",").mapNotNull {
             val split = it.split(".")
-            if (split.size != 2) {
+            if (split.size == 2) {
                 val aid = split[0].toLong()
                 val cid = split[1].toLong()
                 val accessory = storage[aid]
