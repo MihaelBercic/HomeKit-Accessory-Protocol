@@ -10,13 +10,14 @@ This project was developed with interest in privacy and understanding of how the
 - [x] Ed25519 and Curve25519 for consistent and encrypted communication between controllers and the bridge.
 
 ## Get started
-```
+```bash
 git clone https://github.com/MihaelBercic/HomeKit-Accessory-Protocol.git
-cd HomeKit-Accessory-Protocol
-./gradlew jar
+cd HomeKit-Accessory-Protocol       # Move to the cloned folder.
 
-# edit config.json and then
-java -jar build/libs/HAP-1.0.jar
+./gradlew jar                       # Run the jar building task.
+
+nano config.json                    # edit config.json and then.
+java -jar build/libs/HAP-1.0.jar    # run the jar built.
 ```
 
 ## Required dependencies
