@@ -1,7 +1,6 @@
 package homekit.communication
 
 import homekit.structure.Characteristic
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Created by Mihael Valentin Berčič
@@ -12,9 +11,9 @@ object LiveSessions {
 
     private val currentSession: Session get() = threadSessionMap[Thread.currentThread()] ?: throw Exception("Current thread has no session attached!")
 
-    private val threadSessionMap: ConcurrentHashMap<Thread, Session> = ConcurrentHashMap()
-    private val sessionSubscriptions: ConcurrentHashMap<Session, MutableList<Characteristic>> = ConcurrentHashMap()
-    private val registeredCharacteristics: ConcurrentHashMap<Characteristic, MutableList<Session>> = ConcurrentHashMap()
+    private val threadSessionMap: MutableMap<Thread, Session> = mutableMapOf()
+    private val sessionSubscriptions: MutableMap<Session, MutableList<Characteristic>> = mutableMapOf()
+    private val registeredCharacteristics: MutableMap<Characteristic, MutableList<Session>> = mutableMapOf()
 
     internal val Characteristic.isCurrentSessionSubscribed get() = registeredCharacteristics[this]?.contains(currentSession) ?: false
     internal val Characteristic.subscribedSessions get() = registeredCharacteristics[this] ?: emptyList()

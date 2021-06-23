@@ -24,7 +24,7 @@ import kotlin.random.Random
  *
  * This class is a representation of a HomeKit _hap._tcp.local service that will be advertised on the local network.
  */
-class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: String = "HomeServer") : MulticastService("_hap._tcp.local", InetAddress.getLocalHost()) {
+class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: String = "HomeServer", localhost: InetAddress) : MulticastService("_hap._tcp.local", localhost) {
 
     private val recordName = "$name.$protocol"
     private val targetName = "$name.local"
@@ -72,7 +72,7 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
         }
         val newDatagramPacket = respondingPacket.asDatagramPacket
         datagramPacket.data = newDatagramPacket.data
-        if (!isUnicast) sleep(Random.nextLong(100, 300))
+        sleep(Random.nextLong(100, 300))
         socket.send(if (isUnicast) datagramPacket else newDatagramPacket)
     }
 

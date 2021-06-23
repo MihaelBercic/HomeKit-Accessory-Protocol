@@ -5,8 +5,6 @@ import homekit.pairing.PairSetup
 import homekit.pairing.PairVerify
 import homekit.pairing.Pairings
 import homekit.pairing.TLVErrorResponse
-import homekit.structure.*
-import homekit.structure.data.*
 import homekit.structure.storage.AccessoryStorage
 import homekit.structure.storage.PairingStorage
 import homekit.tlv.TLVError
@@ -29,11 +27,11 @@ import java.net.ServerSocket
 class HomeKitServer(private val settings: Settings) {
 
     private var isRunning = true
-    private val localhost = InetAddress.getLocalHost()
+    private var localhost = InetAddress.getLocalHost()
     private val bridgeAddress = "http://${localhost.hostAddress}:${settings.port}"
     private val accessoryStorage: AccessoryStorage = AccessoryStorage(Bridge(bridgeAddress))
     private val pairings = readOrCompute("pairings.json") { PairingStorage() }
-    private val service = HomeKitService(settings, pairings)
+    private val service = HomeKitService(settings, pairings, localhost = localhost)
 
     init {
         File("bridge").mkdir()

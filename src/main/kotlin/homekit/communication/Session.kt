@@ -41,9 +41,10 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
     private val inputStream = socket.getInputStream()
     private val outputStream = socket.getOutputStream()
 
-    private val contentBuffer = ByteBuffer.allocate(50000)
+    private val contentBuffer = ByteBuffer.allocate(100000)
 
     init {
+        Logger.info("New connection from $remoteSocketAddress")
         try {
             while (!shouldClose) {
                 val aad = inputStream.readNBytes(2)
@@ -53,15 +54,14 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
                 }
                 val shouldEncrypt = isSecure
                 if (!shouldEncrypt) {
-                    val request = readHeaders(inputStream, aad).let { HttpRequest(it, inputStream.readNBytes(it.contentLength)) }
-                    homeKitServer.handle(request, this).apply { sendMessage(this, shouldEncrypt) }
+                    val headers = readHeaders(inputStream, aad)
+                    val request = HttpRequest(headers, inputStream.readNBytes(headers.contentLength))
+                    val response = homeKitServer.handle(request, this)
+                    sendMessage(response, shouldEncrypt)
                 } else {
-                    val contentSize = ByteBuffer.allocate(2)
-                        .order(ByteOrder.LITTLE_ENDIAN)
-                        .put(aad)
-                        .position(0)
-                        .short
-                        .toInt()
+                    val bytes = aad.map { it.toInt() and 0xFF }
+                    val contentSize = (bytes[1] shl 8) or bytes[0]
+
                     val content = inputStream.readNBytes(contentSize)
                     val tag = inputStream.readNBytes(16)
 
@@ -75,14 +75,15 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
 
                     val decryptedContent = ChaCha.decrypt(decodingBuffer.array(), controllerToAccessoryKey, aad)
                     contentBuffer.put(decryptedContent)
+                    println(contentSize)
                     if (contentSize < 1024) {
                         val data = ByteArray(contentBuffer.position())
                         contentBuffer.get(0, data)
-                        val headers = parseHeaders(contentBuffer.array())
+                        val headers = parseHeaders(data)
                         val request = HttpRequest(headers, data.takeLast(headers.contentLength).toByteArray())
                         val response = homeKitServer.handle(request, this)
+                        contentBuffer.position(0)
                         sendMessage(response, shouldEncrypt)
-                        contentBuffer.clear()
                     }
 
                 }
