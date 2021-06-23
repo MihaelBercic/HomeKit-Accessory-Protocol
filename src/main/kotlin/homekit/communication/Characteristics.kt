@@ -6,6 +6,7 @@ import homekit.structure.data.CharacteristicResponse
 import homekit.structure.data.CharacteristicsResponse
 import homekit.structure.data.StatusCodes
 import homekit.structure.storage.AccessoryStorage
+import utils.Logger
 import utils.appleGson
 import utils.gson
 

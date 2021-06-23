@@ -1,11 +1,11 @@
 package homekit.communication
 
-import homekit.encryption.ChaCha
-import homekit.encryption.HKDF
-import homekit.encryption.SRP
 import homekit.HomeKitServer
 import homekit.communication.LiveSessions.removeFromLiveSessions
 import homekit.communication.LiveSessions.secureSessionStarted
+import homekit.encryption.ChaCha
+import homekit.encryption.HKDF
+import homekit.encryption.SRP
 import homekit.structure.data.Pairing
 import utils.Constants
 import utils.HttpMethod
@@ -41,6 +41,8 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
     private val inputStream = socket.getInputStream()
     private val outputStream = socket.getOutputStream()
 
+    private val contentBuffer = ByteBuffer.allocate(50000)
+
     init {
         try {
             while (!shouldClose) {
@@ -50,9 +52,16 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
                     break
                 }
                 val shouldEncrypt = isSecure
-                val request: HttpRequest = if (!shouldEncrypt) readHeaders(inputStream, aad).let { HttpRequest(it, inputStream.readNBytes(it.contentLength)) }
-                else {
-                    val contentSize = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).put(aad).position(0).short.toInt()
+                if (!shouldEncrypt) {
+                    val request = readHeaders(inputStream, aad).let { HttpRequest(it, inputStream.readNBytes(it.contentLength)) }
+                    homeKitServer.handle(request, this).apply { sendMessage(this, shouldEncrypt) }
+                } else {
+                    val contentSize = ByteBuffer.allocate(2)
+                        .order(ByteOrder.LITTLE_ENDIAN)
+                        .put(aad)
+                        .position(0)
+                        .short
+                        .toInt()
                     val content = inputStream.readNBytes(contentSize)
                     val tag = inputStream.readNBytes(16)
 
@@ -65,10 +74,18 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
                     }
 
                     val decryptedContent = ChaCha.decrypt(decodingBuffer.array(), controllerToAccessoryKey, aad)
-                    val headers = parseHeaders(decryptedContent)
-                    HttpRequest(headers, decryptedContent.takeLast(headers.contentLength).toByteArray())
+                    contentBuffer.put(decryptedContent)
+                    if (contentSize < 1024) {
+                        val data = ByteArray(contentBuffer.position())
+                        contentBuffer.get(0, data)
+                        val headers = parseHeaders(contentBuffer.array())
+                        val request = HttpRequest(headers, data.takeLast(headers.contentLength).toByteArray())
+                        val response = homeKitServer.handle(request, this)
+                        sendMessage(response, shouldEncrypt)
+                        contentBuffer.clear()
+                    }
+
                 }
-                homeKitServer.handle(request, this).apply { sendMessage(this, shouldEncrypt) }
             }
             Logger.error("Should close has been set to $shouldClose!")
             close()
@@ -147,9 +164,9 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
     }
 
     private fun parseHeaders(byteArray: ByteArray): HttpHeaders {
-        val headers = String(byteArray)
-        val infoMatcher = httpInfoPattern.matcher(headers).apply { find() }
-        val lengthMatcher = contentLengthPattern.matcher(headers)
+        val content = String(byteArray)
+        val infoMatcher = httpInfoPattern.matcher(content).apply { find() }
+        val lengthMatcher = contentLengthPattern.matcher(content)
         val contentLength = if (lengthMatcher.find()) lengthMatcher.group("length").toInt() else 0
         val httpMethod = infoMatcher.group("method")
         val requestedPath = infoMatcher.group("path")
