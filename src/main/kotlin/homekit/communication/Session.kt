@@ -75,7 +75,6 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
 
                     val decryptedContent = ChaCha.decrypt(decodingBuffer.array(), controllerToAccessoryKey, aad)
                     contentBuffer.put(decryptedContent)
-                    println(contentSize)
                     if (contentSize < 1024) {
                         val data = ByteArray(contentBuffer.position())
                         contentBuffer.get(0, data)

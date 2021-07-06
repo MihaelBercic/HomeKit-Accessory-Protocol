@@ -56,12 +56,8 @@ inline fun <reified T> readOrCompute(name: String, block: () -> T): T = File(nam
     else block.invoke()
 }
 
-enum class NetworkRequestType {
-    GET, POST, PUT
-}
 
-
-fun urlRequest(type: NetworkRequestType, url: String, body: Any, callback: (code: Int, response: String) -> Unit = { _, _ -> }) {
+fun urlRequest(type: HttpMethod, url: String, body: Any, callback: (code: Int, response: String) -> Unit = { _, _ -> }) {
     val connection = (URL(url).openConnection() as HttpURLConnection)
     try {
         connection.requestMethod = type.name
