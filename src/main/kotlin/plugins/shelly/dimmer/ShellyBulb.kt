@@ -4,7 +4,7 @@ import homekit.structure.Accessory
 import homekit.structure.data.CharacteristicType
 import homekit.structure.data.ServiceType
 import utils.Logger
-import utils.NetworkRequestType
+import utils.HttpMethod
 import utils.gson
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -17,7 +17,7 @@ class ShellyBulb(aid: Long, name: String, ip: String) : Accessory(aid, name, ip)
     private var scheduledFuture: ScheduledFuture<out Any>? = null
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
-        sendRequest(NetworkRequestType.GET, "/settings?transition=10&fade_rate=3")
+        sendRequest(HttpMethod.GET, "/settings?transition=10&fade_rate=3")
         addService(2, ServiceType.LightBulb).apply {
             registerInformation("1.0.0", "1.0.0", "Shelly", "LightBulb", "ABCDEFG") {
                 Logger.info("Identifying our light bulb!")
@@ -33,7 +33,7 @@ class ShellyBulb(aid: Long, name: String, ip: String) : Accessory(aid, name, ip)
     }
 
     override fun update() {
-        sendRequest(NetworkRequestType.GET, "/light/0") { _, body ->
+        sendRequest(HttpMethod.GET, "/light/0") { _, body ->
             val status = gson.fromJson(body, ShellyBulbStatus::class.java)
             getService(2) {
                 set(CharacteristicType.On) { status.isOn }
@@ -47,7 +47,7 @@ class ShellyBulb(aid: Long, name: String, ip: String) : Accessory(aid, name, ip)
             val toSend = actions.map { (key, value) -> "$key=$value" }.joinToString("&")
             scheduledFuture?.cancel(true)
             scheduledFuture = executor.schedule({
-                sendRequest(NetworkRequestType.GET, "/light/0?$toSend") { code, _ -> if (code == 200) actions.clear() }
+                sendRequest(HttpMethod.GET, "/light/0?$toSend") { code, _ -> if (code == 200) actions.clear() }
             }, 250, TimeUnit.MILLISECONDS)
         }
     }

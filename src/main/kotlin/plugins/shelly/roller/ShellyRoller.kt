@@ -3,8 +3,7 @@ package plugins.shelly.roller
 import homekit.structure.Accessory
 import homekit.structure.data.CharacteristicType
 import homekit.structure.data.ServiceType
-import utils.Logger
-import utils.NetworkRequestType
+import utils.HttpMethod
 import utils.gson
 import java.net.URL
 import java.util.concurrent.Executors
@@ -36,12 +35,12 @@ class ShellyRoller(aid: Long, name: String, ip: String) : Accessory(aid, name, i
 
             val query = "${target.iid},${state.iid},${position.iid}"
             val notificationStopUrl = "/settings/actions?index=0&name=roller_stop_url&enabled=true&urls[]=$bridgeAddress/event?$aid:$query"
-            sendRequest(NetworkRequestType.GET, notificationStopUrl)
+            sendRequest(HttpMethod.GET, notificationStopUrl)
         }
     }
 
     override fun update() {
-        sendRequest(NetworkRequestType.GET, "/roller/0") { _, body ->
+        sendRequest(HttpMethod.GET, "/roller/0") { _, body ->
             getService(2) {
                 val data = gson.fromJson(body, ShellyRollerStatus::class.java)
                 set(CharacteristicType.CurrentPosition) { data.position }

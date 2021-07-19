@@ -3,7 +3,7 @@ package homekit.structure
 import com.google.gson.annotations.Expose
 import homekit.structure.data.CharacteristicType
 import homekit.structure.data.ServiceType
-import utils.NetworkRequestType
+import utils.HttpMethod
 import utils.urlRequest
 
 /**
@@ -71,7 +71,7 @@ abstract class Accessory(@Expose val aid: Long, val name: String, val ip: String
     fun getService(serviceId: Long, block: Service.() -> Unit) = mappedServices[serviceId]?.apply(block)
         ?: throw Exception("Such service [$serviceId] does not exist!")
 
-    fun sendRequest(type: NetworkRequestType, path: String, body: String = "", callback: (code: Int, body: String) -> Unit = { _, _ -> }) = urlRequest(type, "http://$ip$path", body, callback)
+    fun sendRequest(type: HttpMethod, path: String, body: String = "", callback: (code: Int, body: String) -> Unit = { _, _ -> }) = urlRequest(type, "http://$ip$path", body, callback)
 
     operator fun get(iid: Long) = mappedCharacteristics[iid] ?: throw Exception("This characteristic does not exist.")
 
