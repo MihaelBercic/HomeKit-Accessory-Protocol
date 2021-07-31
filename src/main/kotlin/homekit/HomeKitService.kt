@@ -47,7 +47,7 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
     override fun condition(packet: MulticastDnsPacket): Boolean {
         val queries = packet.queryRecords.filter(recordPredicate)
         val answers = packet.answerRecords.filter(recordPredicate)
-        val isOutdated = answers.any { it.timeToLive.apply { Logger.error(this) } <= 1250 }
+        val isOutdated = answers.any { it.timeToLive <= 1250 }
         if (packet.header.isResponse && !isOutdated) return false
         return isOutdated || queries.any { query -> answers.none { it.label == query.label } }
     }

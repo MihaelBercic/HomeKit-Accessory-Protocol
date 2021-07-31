@@ -3,8 +3,8 @@ package plugins.shelly.dimmer
 import homekit.structure.Accessory
 import homekit.structure.data.CharacteristicType
 import homekit.structure.data.ServiceType
-import utils.Logger
 import utils.HttpMethod
+import utils.Logger
 import utils.gson
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -17,18 +17,26 @@ class ShellyBulb(aid: Long, name: String, ip: String) : Accessory(aid, name, ip)
     private var scheduledFuture: ScheduledFuture<out Any>? = null
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
-        sendRequest(HttpMethod.GET, "/settings?transition=10&fade_rate=3")
+        sendRequest(HttpMethod.GET, "/settings?transition=10&fade_rate=5&pulse_mode=2")
+
+
         addService(2, ServiceType.LightBulb).apply {
             registerInformation("1.0.0", "1.0.0", "Shelly", "LightBulb", "ABCDEFG") {
                 Logger.info("Identifying our light bulb!")
             }
 
-            add(CharacteristicType.On) {
+            val onCharacteristic = add(CharacteristicType.On) {
                 actions["turn"] = if (value == true) "on" else "off"
             }
-            add(CharacteristicType.Brightness) {
+            val brightnessCharacteristic = add(CharacteristicType.Brightness) {
                 if (value != null && (value as Int) > 0) actions["brightness"] = value!!
             }
+
+            val query = "${onCharacteristic.iid},${brightnessCharacteristic.iid}"
+            val notificationOffUrl = "/settings/actions?index=0&name=out_off_url&enabled=true&urls[]=$bridgeAddress/event?$aid:$query"
+            val notificationOnUrl = "/settings/actions?index=0&name=out_on_url&enabled=true&urls[]=$bridgeAddress/event?$aid:$query"
+            sendRequest(HttpMethod.GET, notificationOffUrl)
+            sendRequest(HttpMethod.GET, notificationOnUrl)
         }
     }
 
