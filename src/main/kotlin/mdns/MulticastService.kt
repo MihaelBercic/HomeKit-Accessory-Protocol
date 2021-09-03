@@ -4,7 +4,6 @@ import mdns.packet.MulticastDnsPacket
 import utils.Logger
 import utils.asPacket
 import java.net.*
-import kotlin.random.Random
 
 
 /**
@@ -50,10 +49,7 @@ abstract class MulticastService(val protocol: String, val localhost: InetAddress
                         datagramPacket.data = byteArray
                         receive(datagramPacket)
                         val receivedPacket = datagramPacket.asPacket
-                        if (condition(receivedPacket)) {
-                            Thread.sleep(Random.nextLong(100, 300))
-                            respond(this, datagramPacket, receivedPacket)
-                        }
+                        if (condition(receivedPacket)) respond(this, datagramPacket, receivedPacket)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
