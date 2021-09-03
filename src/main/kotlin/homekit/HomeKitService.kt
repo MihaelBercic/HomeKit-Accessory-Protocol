@@ -48,8 +48,9 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
         val queries = packet.queryRecords.filter(recordPredicate)
         val answers = packet.answerRecords.filter(recordPredicate)
         val isOutdated = answers.any { it.timeToLive <= 1250 }
-        if (packet.header.isResponse && !isOutdated) return false
-        return isOutdated || queries.any { query -> answers.none { it.label == query.label } }
+        val allAnswered = queries.all { query -> answers.any { it.label == query.label } }
+        // if (allAnswered && packet.header.isResponse && !isOutdated) return false
+        return isOutdated || !allAnswered
     }
 
     override fun respond(socket: MulticastSocket, datagramPacket: DatagramPacket, packet: MulticastDnsPacket) {

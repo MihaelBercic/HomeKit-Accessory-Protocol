@@ -4,8 +4,12 @@ import utils.generateMAC
 import utils.readOrCompute
 
 fun main() {
-    val settings = readOrCompute("settings.json") {
-        Settings(1, 3000, generateMAC())
+    try {
+        val settings = readOrCompute("settings.json") {
+            Settings(1, 3000, generateMAC())
+        }
+        HomeKitServer(settings).start()
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
-    HomeKitServer(settings).start()
 }
