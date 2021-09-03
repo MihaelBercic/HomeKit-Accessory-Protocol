@@ -103,7 +103,7 @@ class HomeKitServer(private val settings: Settings) {
 
     private fun retrieveAddress(): InetAddress {
         val n = NetworkInterface.networkInterfaces()
-        val x = n.filter { it.name == "en0" }.findFirst()
+        val x = n.filter { it.name == "en0" || it.name == "eth0" }.findFirst()
 
         if (x.isPresent) {
             val networkInterface = x.get()
