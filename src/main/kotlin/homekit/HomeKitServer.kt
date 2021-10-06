@@ -39,6 +39,7 @@ class HomeKitServer(private val settings: Settings) {
     }
 
     fun start() {
+        Logger.info("Starting the bridge...")
         if (localhost.isLoopbackAddress) throw Exception("$this is a loopback address! We can not advertise a loopback address.")
 
         readOrCompute("config.json") { Configuration() }.accessoryData.forEach { data ->
@@ -59,6 +60,7 @@ class HomeKitServer(private val settings: Settings) {
             }
 
             accessory.apply {
+                Logger.debug("Attempting to reach $ip")
                 setup(data, bridgeAddress)
                 update()
                 accessoryStorage.addAccessory(this)

@@ -29,4 +29,6 @@ open class IncompleteRecord(val label: String, val type: RecordType, val hasProp
             put(classCode.minimumBytes(2))
         }
     }
+
+    override fun toString(): String = "$label [$type]"
 }
