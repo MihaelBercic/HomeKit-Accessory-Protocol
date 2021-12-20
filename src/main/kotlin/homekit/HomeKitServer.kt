@@ -16,6 +16,7 @@ import utils.readOrCompute
 import utils.require
 import java.io.File
 import java.net.InetAddress
+import java.net.NetworkInterface
 import java.net.ServerSocket
 
 
@@ -27,7 +28,7 @@ import java.net.ServerSocket
 class HomeKitServer(private val settings: Settings) {
 
     private var isRunning = true
-    private var localhost = InetAddress.getLocalHost()
+    private var localhost: InetAddress = retrieveAddress()
     private val bridgeAddress = "http://${localhost.hostAddress}:${settings.port}"
     private val accessoryStorage: AccessoryStorage = AccessoryStorage(Bridge(bridgeAddress))
     private val pairings = readOrCompute("pairings.json") { PairingStorage() }
@@ -38,6 +39,7 @@ class HomeKitServer(private val settings: Settings) {
     }
 
     fun start() {
+        Logger.info("Starting the bridge...")
         if (localhost.isLoopbackAddress) throw Exception("$this is a loopback address! We can not advertise a loopback address.")
 
         readOrCompute("config.json") { Configuration() }.accessoryData.forEach { data ->
@@ -58,6 +60,7 @@ class HomeKitServer(private val settings: Settings) {
             }
 
             accessory.apply {
+                Logger.debug("Attempting to reach $ip")
                 setup(data, bridgeAddress)
                 update()
                 accessoryStorage.addAccessory(this)
@@ -78,7 +81,7 @@ class HomeKitServer(private val settings: Settings) {
         }.start()
         settings.increaseConfiguration() // TODO modify
         service.startAdvertising()
-        Logger.info("Started our server...")
+        Logger.info("Started our server on $localhost...")
         Logger.info(accessoryStorage.asJson)
     }
 
@@ -98,6 +101,18 @@ class HomeKitServer(private val settings: Settings) {
             path == "/event" && method == HttpMethod.GET -> Events.handleEvents(accessoryStorage, query, session)
             else -> TLVErrorResponse(2, TLVError.Unknown)
         }
+    }
+
+    private fun retrieveAddress(): InetAddress {
+        val n = NetworkInterface.networkInterfaces()
+        val x = n.filter { it.name == "en0" || it.name == "eth0" }.findFirst()
+
+        if (x.isPresent) {
+            val networkInterface = x.get()
+            val address = networkInterface.inetAddresses().filter { it.isSiteLocalAddress }.findFirst()
+            if (address.isPresent) return address.get()
+        }
+        throw Exception("Unable to fetch local address...")
     }
 
 }

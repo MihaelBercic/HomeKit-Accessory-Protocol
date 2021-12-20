@@ -48,8 +48,9 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
         val queries = packet.queryRecords.filter(recordPredicate)
         val answers = packet.answerRecords.filter(recordPredicate)
         val isOutdated = answers.any { it.timeToLive <= 1250 }
-        if (packet.header.isResponse && !isOutdated) return false
-        return isOutdated || queries.any { query -> answers.none { it.label == query.label } }
+        val allAnswered = queries.all { query -> answers.any { it.label == query.label } }
+        // if (allAnswered && packet.header.isResponse && !isOutdated) return false
+        return (isOutdated || !allAnswered)
     }
 
     override fun respond(socket: MulticastSocket, datagramPacket: DatagramPacket, packet: MulticastDnsPacket) {
@@ -60,6 +61,7 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
         val isUnicast = desiredQueries.any { it.hasProperty }
         val respondingPacket = MulticastDnsPacket(MulticastDnsPacketHeader(isResponse = true)).apply {
             if (includePointer) {
+                queryRecords.addAll(desiredQueries)
                 answerRecords.add(tcpAnswer)
                 additionalRecords.apply {
                     add(srvRecord)
@@ -72,8 +74,9 @@ class HomeKitService(settings: Settings, pairingStorage: PairingStorage, name: S
         }
         val newDatagramPacket = respondingPacket.asDatagramPacket
         datagramPacket.data = newDatagramPacket.data
-        sleep(Random.nextLong(100, 300))
+        sleep(Random.nextLong(150, 300))
         socket.send(if (isUnicast) datagramPacket else newDatagramPacket)
+        socket.send(if (!isUnicast) datagramPacket else newDatagramPacket)
     }
 
     override val wakeUpPacket: MulticastDnsPacket = MulticastDnsPacket(MulticastDnsPacketHeader(isResponse = true)).apply {
