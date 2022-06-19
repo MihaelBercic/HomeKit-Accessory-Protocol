@@ -20,8 +20,8 @@ class ShellyRoller(aid: Long, name: String, ip: String) : Accessory(aid, name, i
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
         registerInformation("1.0.0", "1.0", "Shelly", "Switch", "Sh3lly")
-
         sendRequest(HttpMethod.GET, "/ota?update=true")
+
         addService(windowCoveringServiceId, ServiceType.WindowCovering) {
             val state = add(CharacteristicType.PositionState)
             val position = add(CharacteristicType.CurrentPosition)

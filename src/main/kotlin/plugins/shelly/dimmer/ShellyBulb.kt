@@ -17,14 +17,11 @@ class ShellyBulb(aid: Long, name: String, ip: String) : Accessory(aid, name, ip)
     private var scheduledFuture: ScheduledFuture<out Any>? = null
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
+        registerInformation("1.0.0", "1.0.0", "Shelly", "LightBulb", "ABCDEFG")
         sendRequest(HttpMethod.GET, "/settings?transition=10&fade_rate=5&pulse_mode=2")
         sendRequest(HttpMethod.GET, "/ota?update=true")
 
         addService(2, ServiceType.LightBulb).apply {
-            registerInformation("1.0.0", "1.0.0", "Shelly", "LightBulb", "ABCDEFG") {
-                Logger.info("Identifying our light bulb!")
-            }
-
             val onCharacteristic = add(CharacteristicType.On) {
                 actions["turn"] = if (value == true) "on" else "off"
             }
