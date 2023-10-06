@@ -66,7 +66,19 @@ enum class CharacteristicType(
     PositionState(2, Format.Uint8, 0x72, Permission.Notify, Permission.PairedRead, min = 0, max = 2),
 
     @SerializedName("6F")
-    HoldPosition(null, Format.Boolean, 0x6F, Permission.PairedWrite)
+    HoldPosition(null, Format.Boolean, 0x6F, Permission.PairedWrite),
+
+    @SerializedName("68")
+    BatteryLevel(100, Format.Uint8, 0x68, Permission.PairedRead, Permission.Notify),
+
+    @SerializedName("8F")
+    ChargingState(0, Format.Uint8, 0x8F, Permission.PairedRead, Permission.Notify, min = 0, max = 2, step = 1),
+
+    @SerializedName("79")
+    LowBattery(0, Format.Uint8, 0x79, Permission.PairedRead, Permission.Notify, min = 0, max = 1, step = 1),
+
+    @SerializedName("B0")
+    Active(0, Format.Uint8, 0xB0, Permission.PairedWrite, Permission.PairedRead, Permission.Notify, min = 0, max = 1, step = 1)
 
     ;
 

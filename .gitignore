@@ -2,6 +2,7 @@
 .gradle/
 .idea/
 build/
+HAP-Specification-Non-Commercial-Version.pdf
 gradle.properties
 gradlew
 gradlew.bat

@@ -8,6 +8,7 @@ import java.math.BigInteger
 import java.net.DatagramPacket
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.http.HttpClient
 import java.util.*
 
 
@@ -56,6 +57,7 @@ inline fun <reified T> readOrCompute(name: String, block: () -> T): T = File(nam
     else block.invoke()
 }
 
+val httpClient = HttpClient.newHttpClient()
 
 fun urlRequest(type: HttpMethod, url: String, body: Any, callback: (code: Int, response: String) -> Unit = { _, _ -> }) {
     val connection = (URL(url).openConnection() as HttpURLConnection)

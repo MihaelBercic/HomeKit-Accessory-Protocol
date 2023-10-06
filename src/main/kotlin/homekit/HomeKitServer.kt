@@ -8,6 +8,7 @@ import homekit.pairing.TLVErrorResponse
 import homekit.structure.storage.AccessoryStorage
 import homekit.structure.storage.PairingStorage
 import homekit.tlv.TLVError
+import plugins.husqvarna.AutoMower
 import plugins.shelly.dimmer.ShellyBulb
 import plugins.shelly.roller.ShellyRoller
 import utils.*
@@ -36,7 +37,7 @@ class HomeKitServer(private val settings: Settings) {
     }
 
     fun start() {
-        Logger.info("Starting the bridge...")
+        Logger.info("Starting the bridge... $bridgeAddress")
         if (localhost.isLoopbackAddress) throw Exception("$this is a loopback address! We can not advertise a loopback address.")
 
         readOrCompute("config.json") { Configuration() }.accessoryData.forEach { data ->
@@ -44,6 +45,7 @@ class HomeKitServer(private val settings: Settings) {
             val name = data.require<String>("name") { "Name has to be specified for each accessory!" }
             val type = data.require<String>("type") { "Type has to be specified for each accessory!" }
             val mac = data.require<String>("mac") { "An accessory MAC address has to be specified for each accessory!" }
+            val additionalInformation = data["data"]?.toString() ?: ""
             val macAsNumber = mac.replace(":", "").toLong(16)
 
             if (macAsNumber <= 1 || accessoryStorage.contains(macAsNumber)) {
@@ -53,6 +55,7 @@ class HomeKitServer(private val settings: Settings) {
             val accessory = when (type) {
                 "ShellyBulb" -> ShellyBulb(macAsNumber, name, ip)
                 "ShellySwitch" -> ShellyRoller(macAsNumber, name, ip)
+                "AutoMower" -> AutoMower(macAsNumber, name, ip, additionalInformation)
                 else -> throw Exception("Accessory type of $type is not supported.")
             }
 
@@ -102,8 +105,7 @@ class HomeKitServer(private val settings: Settings) {
 
     private fun retrieveAddress(): InetAddress {
         val n = NetworkInterface.networkInterfaces()
-        val x = n.filter { it.name == "en0" || it.name == "eth0" }.findFirst()
-
+        val x = n.filter { it.name == "en0" || it.name == "eth0" || it.name == "en7" }.findFirst()
         if (x.isPresent) {
             val networkInterface = x.get()
             val address = networkInterface.inetAddresses().filter { it.isSiteLocalAddress }.findFirst()

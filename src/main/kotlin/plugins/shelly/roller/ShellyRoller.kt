@@ -31,7 +31,11 @@ class ShellyRoller(aid: Long, name: String, ip: String) : Accessory(aid, name, i
 
                 actions["go"] = "to_pos"
                 actions["roller_pos"] = newValue
-                state.value = if (newValue < currentValue) 1 else 0
+                state.value = when {
+                    newValue < currentValue -> 0
+                    newValue > currentValue -> 1
+                    else -> 2
+                }
             }
 
             val query = "${target.iid},${state.iid},${position.iid}"

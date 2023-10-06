@@ -18,8 +18,13 @@ enum class ServiceType(val value: Int) {
     @SerializedName("43")
     LightBulb(0x43),
 
-
     @SerializedName("8C")
     WindowCovering(0x8C),
+
+    @SerializedName("96")
+    Battery(0x96),
+
+    @SerializedName("B7")
+    Fan(0xB7),
 
 }

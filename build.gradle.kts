@@ -1,9 +1,13 @@
 plugins {
-    kotlin("jvm") version "1.4.30"
+    kotlin("jvm") version "1.9.10"
 }
 
 group = "si.homeserver"
 version = "1.0"
+
+kotlin {
+    jvmToolchain(15)
+}
 
 repositories {
     mavenCentral()
