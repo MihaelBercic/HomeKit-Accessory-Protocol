@@ -14,8 +14,14 @@ repositories {
 }
 
 dependencies {
+    testImplementation(kotlin("test"))
     implementation(kotlin("stdlib"))
     implementation("com.google.code.gson:gson:2.8.6")
+}
+
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.jar {

@@ -33,15 +33,15 @@ object Logger {
      * @param message
      * @param color Text color
      */
-    private fun log(message: Any, color: String = black) {
+    private fun log(message: Any?, color: String = black) {
         if (!isLoggingEnabled) return
         val timestamp = LocalDateTime.now().format(timeFormat).padEnd(11)
         println("$color[$timestamp]$reset\t$message")
     }
 
-    fun info(message: Any) = log(message, green)
-    fun debug(message: Any) = log(message, blue)
-    fun error(message: Any) = log(message, red)
-    fun trace(message: Any) = log(message, yellow)
+    fun info(message: Any?) = log(message, green)
+    fun debug(message: Any?) = log(message, blue)
+    fun error(message: Any?) = log(message, red)
+    fun trace(message: Any?) = log(message, yellow)
 
 }
