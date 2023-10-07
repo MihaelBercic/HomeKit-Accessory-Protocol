@@ -13,6 +13,8 @@ import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse.BodyHandlers
 import java.net.http.WebSocket
 import java.util.Timer
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.schedule
 import kotlin.concurrent.timer
 import kotlin.system.exitProcess
@@ -75,7 +77,8 @@ class AutoMower(aid: Long, name: String, ip: String, private val additionalData:
             activeIID = activeCharacteristic.iid
             Logger.info("IID: ${activeCharacteristic.iid}")
         }
-        timer("AutoMower Update Timer", period = 15 * 60 * 1000) {
+        val minutes = TimeUnit.MINUTES.toMillis(15)
+        fixedRateTimer("AutoMower Update Timer", period = minutes, initialDelay = minutes) {
             update()
         }
     }
@@ -91,16 +94,18 @@ class AutoMower(aid: Long, name: String, ip: String, private val additionalData:
             set(CharacteristicType.ChargingState) { if (activity == "CHARGING" || activity == "PARKED_IN_CS") 1 else 0 }
         }
         getService(3) {
-            Logger.error("Is mower active? ${activity == "MOWING"}")
+            Logger.error("Is mower active? ${activity == "MOWING" || activity == "LEAVING"}")
             set(CharacteristicType.Active) { if (activity == "MOWING" || activity == "LEAVING") 1 else 0 }
         }
     }
 
     override fun commitChanges() {
-        update()
         if (nextRequest == null) return
         val request = HttpRequest.newBuilder(URI("$mowerEndpoint/actions".apply(Logger::info))).POST(BodyPublishers.ofString(gson.toJson(nextRequest))).apply(this::authenticationHeaders).build()
         val response = httpClient.send(request, BodyHandlers.ofString())
+        Timer().schedule(30 * 1000) {
+            update()
+        }
         nextRequest = null
     }
 
@@ -111,7 +116,7 @@ class AutoMower(aid: Long, name: String, ip: String, private val additionalData:
             header("Content-Type", "application/vnd.api+json")
             header("X-Api-Key", mowerData.clientId)
             header("Authorization", "Bearer ${authData.accessToken}")
-            header("Authorization-Provider", authData.provider)
+            header("Authorization-Provider", "husqvarna")
         }
     }
 }
