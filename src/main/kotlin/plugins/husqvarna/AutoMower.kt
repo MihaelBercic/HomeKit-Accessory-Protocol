@@ -3,21 +3,18 @@ package plugins.husqvarna
 import homekit.structure.Accessory
 import homekit.structure.data.CharacteristicType
 import homekit.structure.data.ServiceType
-import plugins.husqvarna.communication.HusqvarnaSocketListener
 import plugins.husqvarna.structure.*
 import utils.*
 import java.net.URI
-import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
+import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandlers
-import java.net.http.WebSocket
 import java.util.Timer
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.schedule
-import kotlin.concurrent.timer
-import kotlin.system.exitProcess
 
 class AutoMower(aid: Long, name: String, ip: String, private val additionalData: String) : Accessory(aid, name) {
 
@@ -48,10 +45,9 @@ class AutoMower(aid: Long, name: String, ip: String, private val additionalData:
         return details
     }
 
-    private fun getMowerDetails(): AutoMowerDataResponse {
+    private fun getMowerDetails(): CompletableFuture<HttpResponse<String>> {
         val request = HttpRequest.newBuilder(URI(mowerEndpoint)).GET().apply(this::authenticationHeaders).build()
-        val response = httpClient.send(request, BodyHandlers.ofString())
-        return gson.fromJson(response.body(), AutoMowerDataResponse::class.java)
+        return httpClient.sendAsync(request, BodyHandlers.ofString())
     }
 
     override fun setup(configurationDetails: Map<String, Any>, bridgeAddress: String) {
@@ -83,26 +79,33 @@ class AutoMower(aid: Long, name: String, ip: String, private val additionalData:
         }
     }
 
-    override fun update() {
-        val details = getMowerDetails()
-        val mowerData = details.data.attributes
-        val activity = mowerData.mower.activity
-        Logger.info("Updated information: $mowerData")
-        getService(2) {
-            set(CharacteristicType.BatteryLevel) { mowerData.battery.batteryPercent }
-            set(CharacteristicType.LowBattery) { if (mowerData.battery.batteryPercent < 20) 1 else 0 }
-            set(CharacteristicType.ChargingState) { if (activity == "CHARGING" || activity == "PARKED_IN_CS") 1 else 0 }
-        }
-        getService(3) {
-            Logger.error("Is mower active? ${activity == "MOWING" || activity == "LEAVING"}")
-            set(CharacteristicType.Active) { if (activity == "MOWING" || activity == "LEAVING") 1 else 0 }
+    private fun fetchCloudStatus() {
+        getMowerDetails().thenAccept { response ->
+            val details = gson.fromJson(response.body(), AutoMowerDataResponse::class.java)
+            val mowerData = details.data.attributes
+            val activity = mowerData.mower.activity
+            Logger.info("Updated information: $mowerData")
+            getService(2) {
+                set(CharacteristicType.BatteryLevel) { mowerData.battery.batteryPercent }
+                set(CharacteristicType.LowBattery) { if (mowerData.battery.batteryPercent < 20) 1 else 0 }
+                set(CharacteristicType.ChargingState) { if (activity == "CHARGING" || activity == "PARKED_IN_CS") 1 else 0 }
+            }
+            getService(3) {
+                Logger.error("Is mower active? ${activity == "MOWING" || activity == "LEAVING"}")
+                set(CharacteristicType.Active) { if (activity == "MOWING" || activity == "LEAVING") 1 else 0 }
+            }
         }
     }
 
+    override fun update() {
+        fetchCloudStatus()
+    }
+
     override fun commitChanges() {
+        fetchCloudStatus()
         if (nextRequest == null) return
         val request = HttpRequest.newBuilder(URI("$mowerEndpoint/actions".apply(Logger::info))).POST(BodyPublishers.ofString(gson.toJson(nextRequest))).apply(this::authenticationHeaders).build()
-        val response = httpClient.send(request, BodyHandlers.ofString())
+        val response = httpClient.sendAsync(request, BodyHandlers.ofString())
         Timer().schedule(30 * 1000) {
             update()
         }
