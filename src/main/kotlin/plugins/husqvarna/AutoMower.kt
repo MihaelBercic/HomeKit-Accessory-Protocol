@@ -18,7 +18,7 @@ import kotlin.concurrent.schedule
 
 class AutoMower(aid: Long, name: String, ip: String, private val additionalData: String) : Accessory(aid, name) {
 
-    private data class DurationAttributes(val duration: Int = 600)
+    private data class DurationAttributes(val duration: Int = 300)
     private data class ActionRequest(val type: String, val attributes: DurationAttributes?)
     private data class ApiRequest(val data: ActionRequest)
 
