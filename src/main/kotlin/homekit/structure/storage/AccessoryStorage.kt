@@ -30,5 +30,5 @@ class AccessoryStorage(bridge: Accessory) {
 
     val asJson get() = appleGson.toJson(this)
 
-    fun createHttpResponse() = HttpResponse(data = asJson.toByteArray())
+    fun createHttpResponse() = HttpResponse(data = asJson.apply { println(this) }.toByteArray())
 }

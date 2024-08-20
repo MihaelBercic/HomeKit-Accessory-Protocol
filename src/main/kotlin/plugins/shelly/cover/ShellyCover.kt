@@ -4,13 +4,15 @@ import homekit.structure.Accessory
 import homekit.structure.data.CharacteristicType
 import homekit.structure.data.ServiceType
 import utils.HttpMethod
+import utils.Logger
 import utils.gson
 import java.net.URL
+import java.net.URLEncoder
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class ShellyRoller(aid: Long, name: String, ip: String) : Accessory(aid, name, ip) {
+class ShellyCover(aid: Long, name: String, ip: String) : Accessory(aid, name, ip) {
 
     private val actions = mutableMapOf<String, Any>()
     private val executor = Executors.newSingleThreadScheduledExecutor()
@@ -38,8 +40,10 @@ class ShellyRoller(aid: Long, name: String, ip: String) : Accessory(aid, name, i
                 }
             }
 
+            sendRequest(HttpMethod.GET, "/rpc/Webhook.DeleteAll")
             val query = "${target.iid},${state.iid},${position.iid}"
-            val notificationStopUrl = "/settings/actions?index=0&name=roller_stop_url&enabled=true&urls[]=$bridgeAddress/event?$aid:$query"
+            val urls = arrayOf("\"$bridgeAddress/event?$aid:$query\"").map { URLEncoder.encode(it, Charsets.UTF_8) }
+            val notificationStopUrl = "/rpc/Webhook.Create?event=cover.stopped&cid=0&enable=true&urls=[${urls.joinToString(",")}]"
             sendRequest(HttpMethod.GET, notificationStopUrl)
         }
     }

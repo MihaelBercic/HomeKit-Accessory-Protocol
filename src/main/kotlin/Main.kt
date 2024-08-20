@@ -1,10 +1,15 @@
 import homekit.HomeKitServer
 import homekit.Settings
-import utils.Logger
-import utils.generateMAC
-import utils.readOrCompute
-import java.util.Timer
+import utils.*
+import java.net.HttpURLConnection
+import java.net.URI
+import java.net.URL
+import java.net.http.HttpClient
+import java.net.http.HttpRequest.BodyPublishers
+import java.net.http.HttpResponse
+import java.util.*
 import kotlin.concurrent.schedule
+import kotlin.system.exitProcess
 
 fun main() {
     startHomeKit()

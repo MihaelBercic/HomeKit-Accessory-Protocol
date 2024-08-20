@@ -124,7 +124,7 @@ class Session(private val socket: Socket, homeKitServer: HomeKitServer) {
 
     private fun encodeIntoFrames(response: Response): ByteArray {
         val dataToEncrypt = response.data.toList().chunked(1024)
-        val totalSizeNeeded = dataToEncrypt.sumBy { it.size + 18 }
+        val totalSizeNeeded = dataToEncrypt.sumOf { it.size + 18 }
         val byteBuffer = ByteBuffer.allocate(totalSizeNeeded)
 
         dataToEncrypt.forEach { frame ->

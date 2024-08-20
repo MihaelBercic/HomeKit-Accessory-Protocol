@@ -6,9 +6,10 @@ import mdns.packet.PacketReader
 import java.io.File
 import java.math.BigInteger
 import java.net.DatagramPacket
-import java.net.HttpURLConnection
-import java.net.URL
+import java.net.URI
 import java.net.http.HttpClient
+import java.net.http.HttpRequest.BodyPublishers
+import java.net.http.HttpResponse
 import java.util.*
 
 
@@ -60,31 +61,24 @@ inline fun <reified T> readOrCompute(name: String, block: () -> T): T = File(nam
 val httpClient = HttpClient.newHttpClient()
 
 fun urlRequest(type: HttpMethod, url: String, body: Any, callback: (code: Int, response: String) -> Unit = { _, _ -> }) {
-    val connection = (URL(url).openConnection() as HttpURLConnection)
     try {
-        connection.requestMethod = type.name
-        connection.doOutput = true
-        connection.doInput = true
-        connection.connect()
-        val outputStream = connection.outputStream
-        val inputStream = connection.inputStream
-        when (body) {
-            is String -> if (body.isNotEmpty()) outputStream.write(body.toByteArray())
-            // Left room for other types
-        }
-        val response = connection.inputStream.readAllBytes()
-
-        outputStream.close()
-        inputStream.close()
-        connection.disconnect()
-        callback(connection.responseCode, String(response))
+        val request = java.net.http.HttpRequest.newBuilder(URI(url)).apply {
+            when (type) {
+                HttpMethod.GET -> GET()
+                HttpMethod.POST -> POST(BodyPublishers.ofString(body.toString()))
+                HttpMethod.PUT -> PUT(BodyPublishers.ofString(body.toString()))
+                HttpMethod.DELETE -> DELETE()
+                else -> {}
+            }
+        }.build()
+        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
+        callback(response.statusCode(), response.body())
     } catch (e: Exception) {
-        Logger.error("URL error to $url")
+        Logger.error("URL error to ${type.name} $url")
         e.printStackTrace()
-    } finally {
-        connection.disconnect()
     }
 }
+
 
 /**
  * Created by Mihael Valentin Berčič

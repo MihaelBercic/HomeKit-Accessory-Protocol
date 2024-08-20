@@ -10,6 +10,7 @@ import homekit.structure.storage.PairingStorage
 import homekit.tlv.TLVError
 import plugins.husqvarna.AutoMower
 import plugins.shelly.dimmer.ShellyBulb
+import plugins.shelly.roller.ShellyCover
 import plugins.shelly.roller.ShellyRoller
 import utils.*
 import java.io.File
@@ -55,6 +56,7 @@ class HomeKitServer(private val settings: Settings) {
             val accessory = when (type) {
                 "ShellyBulb" -> ShellyBulb(macAsNumber, name, ip)
                 "ShellySwitch" -> ShellyRoller(macAsNumber, name, ip)
+                "ShellyCover" -> ShellyCover(macAsNumber, name, ip)
                 "AutoMower" -> AutoMower(macAsNumber, name, ip, additionalInformation)
                 else -> throw Exception("Accessory type of $type is not supported.")
             }
