@@ -1,9 +1,9 @@
 package homekit.pairing
 
-import homekit.encryption.Ed25519
 import homekit.HomeKitService
 import homekit.communication.HttpResponse
 import homekit.communication.Session
+import homekit.encryption.Ed25519
 import homekit.structure.data.Pairing
 import homekit.structure.storage.PairingStorage
 import homekit.tlv.*

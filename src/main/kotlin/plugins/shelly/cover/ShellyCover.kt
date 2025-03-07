@@ -4,7 +4,6 @@ import homekit.structure.Accessory
 import homekit.structure.data.CharacteristicType
 import homekit.structure.data.ServiceType
 import utils.HttpMethod
-import utils.Logger
 import utils.gson
 import java.net.URL
 import java.net.URLEncoder

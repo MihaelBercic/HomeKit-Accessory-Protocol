@@ -1,7 +1,6 @@
 package plugins.shelly.roller
 
 import com.google.gson.annotations.SerializedName
-import plugins.shelly.roller.PositionStates
 
 /**
  * Created by Mihael Valentin Berčič

@@ -6,7 +6,7 @@ group = "si.homeserver"
 version = "1.0"
 
 kotlin {
-    jvmToolchain(15)
+    jvmToolchain(20)
 }
 
 repositories {

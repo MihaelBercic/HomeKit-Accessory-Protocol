@@ -3,10 +3,8 @@ package plugins.husqvarna.communication
 import plugins.husqvarna.structure.AutoMowerData
 import utils.Logger
 import utils.gson
-import java.lang.Exception
 import java.net.http.WebSocket
-import java.util.Timer
-import java.util.TimerTask
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import kotlin.concurrent.scheduleAtFixedRate

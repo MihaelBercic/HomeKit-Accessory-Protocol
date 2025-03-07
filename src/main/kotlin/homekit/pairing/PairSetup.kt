@@ -1,11 +1,11 @@
 package homekit.pairing
 
-import homekit.encryption.ChaCha
-import homekit.encryption.Ed25519
-import homekit.encryption.HKDF
 import homekit.Settings
 import homekit.communication.HttpResponse
 import homekit.communication.Session
+import homekit.encryption.ChaCha
+import homekit.encryption.Ed25519
+import homekit.encryption.HKDF
 import homekit.structure.data.Pairing
 import homekit.structure.storage.PairingStorage
 import homekit.tlv.TLVError
